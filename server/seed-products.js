@@ -77,11 +77,17 @@ const RAW = [
 // Mijozlar eng ko'p so'raydigan hidlar — katalogda "Xit" belgisi bilan chiqadi.
 const BESTSELLERS = new Set(['creed-aventus', 'baccarat-540', 'dior-souvage', 'tom-ford-tobacco-vanille', 'delina-de-marly', 'kirke', 'libre-ysl', 'blue-de-chanel']);
 
+// Boshlang'ich aksiya: 5 ta erkaklar + 5 ta ayollar atiriga 10% chegirma (saytdagi "chegirmalar" karuselida ko'rinadi)
+const DEALS = new Set([
+  'versage-eros', 'stronger-with-you-intensely', 'acqua-di-gio', 'men-212', 'tomford-ombre-leather',
+  'lady-million', 'gucci-flora', 'dg-l-imperatrice', 'valentino', 'my-way',
+]);
+
 module.exports = RAW.map(([id, name, brand, gender, image, family, notes, intensity], i) => ({
   id, name, brand, gender, image: 'assets/' + image, family,
   notes: { top: notes[0], heart: notes[1], base: notes[2] },
   intensity,
-  discount: 0,          // shu mahsulot uchun alohida chegirma (%)
+  discount: DEALS.has(id) ? 10 : 0, // shu mahsulot uchun alohida chegirma (%)
   bestseller: BESTSELLERS.has(id),
   active: true,
   order: i,

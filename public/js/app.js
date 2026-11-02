@@ -50,15 +50,65 @@
     renderPrices();
     renderContact();
     renderProducts();
+    renderDeals();
+    renderLightboxCaption();
     if (state.current && !$('#productModal').hidden) fillModal(state.current, true);
   }
 
-  function moveLangIndicator() {
-    const active = $('.lang-btn.is-active');
-    const ind = $('.lang-indicator');
+  function moveIndicator(active, ind) {
     if (!active || !ind) return;
     ind.style.width = active.offsetWidth + 'px';
     ind.style.transform = `translateX(${active.offsetLeft - 3}px)`;
+  }
+  function moveLangIndicator() {
+    moveIndicator($('.lang-btn.is-active'), $('.lang-indicator'));
+    moveIndicator($('.theme-btn.is-active'), $('.theme-indicator'));
+  }
+
+  // ------------------------------------------------------------ day / night theme
+  // Avtomatik: 08:00–20:00 kunduzgi, 20:00–08:00 tungi. Qo'lda tanlov keyingi almashinuv vaqtigacha amal qiladi.
+  const THEME_KEY = 'able-theme';
+  const autoTheme = (d = new Date()) => (d.getHours() >= 8 && d.getHours() < 20 ? 'light' : 'dark');
+  function nextSwitch(d = new Date()) {
+    const n = new Date(d);
+    n.setMinutes(0, 0, 0);
+    if (d.getHours() < 8) n.setHours(8);
+    else if (d.getHours() < 20) n.setHours(20);
+    else { n.setDate(n.getDate() + 1); n.setHours(8); }
+    return n.getTime();
+  }
+  function wantedTheme() {
+    try {
+      const o = JSON.parse(localStorage.getItem(THEME_KEY));
+      if (o && o.until > Date.now()) return o.theme;
+    } catch { /* ignore */ }
+    return autoTheme();
+  }
+  function applyTheme(theme, animate) {
+    const run = () => {
+      document.documentElement.dataset.theme = theme;
+      $('meta[name="theme-color"]').setAttribute('content', theme === 'light' ? '#fdfaf4' : '#3a0a14');
+      $$('.theme-btn').forEach((b) => {
+        const on = b.dataset.themeSet === theme;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on);
+      });
+      moveLangIndicator();
+    };
+    if (animate && !reduceMotion && document.startViewTransition) document.startViewTransition(run);
+    else run();
+  }
+  function initTheme() {
+    applyTheme(wantedTheme(), false);
+    $$('.theme-btn').forEach((b) => b.addEventListener('click', () => {
+      const theme = b.dataset.themeSet;
+      try { localStorage.setItem(THEME_KEY, JSON.stringify({ theme, until: nextSwitch() })); } catch { /* private mode */ }
+      if (theme !== document.documentElement.dataset.theme) applyTheme(theme, true);
+    }));
+    setInterval(() => {
+      const t = wantedTheme();
+      if (t !== document.documentElement.dataset.theme) applyTheme(t, true);
+    }, 60 * 1000);
   }
 
   function setLang(lang, btn) {
@@ -90,12 +140,53 @@
     }
   }
 
+  // Extrude a product shot into a solid: darker copies stacked behind it along Z
+  function extrude(box, cls, count, step) {
+    const front = $('img', box);
+    for (let i = 1; i <= count; i++) {
+      const layer = front.cloneNode();
+      layer.className = cls;
+      layer.style.transform = `translateZ(${-i * step}px)`;
+      box.insertBefore(layer, box.firstChild);
+    }
+  }
+
+  // ------------------------------------------------------------ about: 3D showcase
+  function initShowcase() {
+    const root = $('#aboutShowcase');
+    if (!root) return;
+    $$('.sc-solid', root).forEach((s) => extrude(s, 'sc-depth', 9, 1.6));
+    $$('.sc-bottle', root).forEach((b) => b.addEventListener('click', () => {
+      const p = state.products.find((x) => x.id === b.dataset.id);
+      if (p) openModal(p);
+    }));
+    if (reduceMotion || !matchMedia('(hover: hover)').matches) return;
+    // Sichqoncha tomonga yengil og'ish
+    root.addEventListener('pointermove', (e) => {
+      const r = root.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      $$('.showcase-stage', root).forEach((s) => {
+        s.style.setProperty('--ty', x * 18 + 'deg');
+        s.style.setProperty('--tx', -y * 12 + 'deg');
+      });
+    });
+    root.addEventListener('pointerleave', () => $$('.showcase-stage', root).forEach((s) => {
+      s.style.removeProperty('--ty');
+      s.style.removeProperty('--tx');
+    }));
+  }
+
   // ------------------------------------------------------------ intro
   function runIntro() {
     const intro = $('#intro');
     const force = /[?&]intro=1/.test(location.search);
-    if ((store.get('able-intro-seen') && !force) || reduceMotion) { intro.classList.add('is-gone'); return Promise.resolve(); }
+    // Shown once per visit (tab session), not once forever
+    const seen = { get: () => { try { return sessionStorage.getItem('able-intro-seen'); } catch { return null; } },
+                   set: () => { try { sessionStorage.setItem('able-intro-seen', '1'); } catch { /* private mode */ } } };
+    if ((seen.get() && !force) || reduceMotion) { intro.classList.add('is-gone'); return Promise.resolve(); }
     document.body.classList.add('no-scroll');
+
+    $$('.bottle-3d', intro).forEach((bottle) => extrude(bottle, 'bottle-depth', 14, 1.4));
 
     const spawnMist = (box, dir) => {
       for (let i = 0; i < 60; i++) {
@@ -119,7 +210,7 @@
         if (done) return;
         done = true;
         timers.forEach(clearTimeout);
-        store.set('able-intro-seen', '1');
+        seen.set();
         intro.classList.add('is-leaving');
         document.body.classList.remove('no-scroll');
         setTimeout(() => intro.classList.add('is-gone'), 1100);
@@ -168,16 +259,137 @@
 
   function renderPrices() {
     const { sizes, globalDiscount } = state.settings;
-    $('#priceBand').innerHTML = sizes.map((s) => {
-      const fin = Math.round((s.price * (100 - globalDiscount)) / 100 / 1000) * 1000;
-      return `<div class="price-chip"><b>${s.ml} ${t('ml')}</b>${globalDiscount ? `<s>${priceText(s.price)}</s>` : ''}<span>${priceText(fin)}</span></div>`;
-    }).join('');
-    const rib = $('#discountRibbon');
-    const label = state.settings.discountLabel && state.settings.discountLabel[state.lang];
-    if (globalDiscount) { rib.textContent = label || `−${globalDiscount}%`; rib.classList.remove('hidden'); } else rib.classList.add('hidden');
     const min = Math.min(...sizes.map((s) => Math.round((s.price * (100 - globalDiscount)) / 100 / 1000) * 1000));
     $('#statFrom').textContent = money(min);
     $('#statSizes').textContent = sizes.length;
+  }
+
+  // ------------------------------------------------------------ deals: 3D karusel
+  // Alohida chegirmasi bor (discount > 0) atirlar; erkak/ayol navbatma-navbat.
+  const deals = { pos: 0, items: [], gap: 200, timer: 0, paused: false, justDragged: false };
+  function dealProducts() {
+    const list = state.products.filter((p) => (Number(p.discount) || 0) > 0);
+    const women = list.filter((p) => p.gender === 'women'), others = list.filter((p) => p.gender !== 'women');
+    const out = [];
+    for (let i = 0; i < Math.max(women.length, others.length); i++) {
+      if (others[i]) out.push(others[i]);
+      if (women[i]) out.push(women[i]);
+    }
+    return out;
+  }
+  function renderDeals() {
+    const box = $('#deals');
+    if (!box) return;
+    const items = dealProducts();
+    // Admin panelda chegirma qo'yilgan har bir atir shu yerga avtomatik tushadi (1 ta bo'lsa ham)
+    box.hidden = items.length === 0;
+    box.classList.toggle('is-single', items.length === 1);
+    if (box.hidden) { deals.items = []; return; }
+    const ml = Math.min(...state.settings.sizes.map((s) => s.ml));
+    $('.deals-pct', box).textContent = `−${Math.max(...items.map(discountOf))}%`;
+    $('#dealsStage').innerHTML = items.map((p) => {
+      const pr = finalPrice(p, ml);
+      return `<button type="button" class="deal-card" data-id="${p.id}" aria-label="${escapeHtml(p.brand || '')} ${escapeHtml(p.name)}">
+        <span class="deal-badge">−${pr.discount}%</span>
+        <span class="deal-media"><span class="deal-solid"><img src="${p.image}" alt="" loading="lazy" draggable="false" /></span></span>
+        <span class="deal-brand">${escapeHtml(p.brand || '')}</span>
+        <span class="deal-name">${escapeHtml(p.name)}</span>
+        <span class="deal-meta">${t('g.' + p.gender)} · ${ml} ${t('ml')}</span>
+        <span class="deal-price"><s>${money(pr.base)}</s><b>${priceText(pr.final)}</b></span>
+        <span class="deal-cta">${t('deals.order')}</span>
+      </button>`;
+    }).join('');
+    $$('.deal-solid', box).forEach((s) => extrude(s, 'deal-depth', 8, 1.6));
+    $('#dealsDots').innerHTML = items.map(() => '<i></i>').join('');
+    deals.items = $$('.deal-card', box);
+    if (deals.pos >= items.length) deals.pos = 0;
+    layoutDeals(true);
+  }
+  function layoutDeals(animate) {
+    const n = deals.items.length;
+    if (!n) return;
+    const stage = $('#dealsStage');
+    const w = stage.clientWidth;
+    deals.gap = w < 640 ? w * 0.4 : Math.min(240, w * 0.2);
+    stage.classList.toggle('is-dragging', !animate);
+    deals.items.forEach((el, i) => {
+      let off = (((i - deals.pos) % n) + n) % n;
+      if (off > n / 2) off -= n;
+      const a = Math.abs(off), rot = Math.max(-1.6, Math.min(1.6, off)) * -26;
+      el.style.transform = `translateX(${off * deals.gap}px) translateZ(${-a * 150}px) rotateY(${rot}deg)`;
+      el.style.opacity = a > 2.6 ? 0 : 1 - a * 0.16;
+      el.style.zIndex = 100 - Math.round(a * 10);
+      el.style.pointerEvents = a > 2.6 ? 'none' : '';
+      el.classList.toggle('is-center', a < 0.5);
+      el.tabIndex = a < 0.5 ? 0 : -1;
+    });
+    const cur = ((Math.round(deals.pos) % n) + n) % n;
+    $$('#dealsDots i').forEach((d, i) => d.classList.toggle('is-on', i === cur));
+  }
+  function goDeals(step) {
+    deals.pos = Math.round(deals.pos) + step;
+    layoutDeals(true);
+  }
+  function initDeals() {
+    const stage = $('#dealsStage');
+    if (!stage) return;
+    $('#dealsPrev').addEventListener('click', () => goDeals(-1));
+    $('#dealsNext').addEventListener('click', () => goDeals(1));
+    addEventListener('resize', () => layoutDeals(true));
+
+    // Sichqoncha/barmoq bilan chapga-o'ngga surish
+    let drag = null;
+    stage.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || !deals.items.length) return;
+      drag = { x: e.clientX, pos: deals.pos, moved: false, id: e.pointerId };
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; stage.setPointerCapture(drag.id); }
+      if (drag.moved) { deals.pos = drag.pos - dx / deals.gap; layoutDeals(false); }
+    });
+    const end = () => {
+      if (!drag) return;
+      if (drag.moved) {
+        deals.justDragged = true;
+        setTimeout(() => { deals.justDragged = false; }, 0);
+        deals.pos = Math.round(deals.pos);
+        layoutDeals(true);
+      }
+      drag = null;
+    };
+    stage.addEventListener('pointerup', end);
+    stage.addEventListener('pointercancel', end);
+
+    // Yon kartani bossangiz markazga keladi, markazdagini bossangiz buyurtma oynasi ochiladi
+    stage.addEventListener('click', (e) => {
+      const card = e.target.closest('.deal-card');
+      if (!card || deals.justDragged) return;
+      const i = deals.items.indexOf(card), n = deals.items.length;
+      let off = (((i - Math.round(deals.pos)) % n) + n) % n;
+      if (off > n / 2) off -= n;
+      if (off !== 0) return goDeals(off);
+      const p = state.products.find((x) => x.id === card.dataset.id);
+      if (p) openModal(p);
+    });
+    stage.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goDeals(-1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); goDeals(1); }
+    });
+
+    // Avtomatik aylanish: kursor ustida bo'lsa yoki ekranda ko'rinmasa to'xtaydi
+    if (reduceMotion) return;
+    const box = $('#deals');
+    let visible = false;
+    new IntersectionObserver(([en]) => { visible = en.isIntersecting; }).observe(box);
+    box.addEventListener('pointerenter', () => { deals.paused = true; });
+    box.addEventListener('pointerleave', () => { deals.paused = false; });
+    box.addEventListener('focusin', () => { deals.paused = true; });
+    box.addEventListener('focusout', () => { deals.paused = false; });
+    deals.timer = setInterval(() => {
+      if (deals.items.length > 1 && visible && !deals.paused && !drag && !document.hidden && $('#productModal').hidden) goDeals(1);
+    }, 3200);
   }
 
   function renderFaq() {
@@ -205,9 +417,12 @@
 
   function filtered() {
     const q = state.query.trim().toLowerCase();
+    const onSale = (p) => (Number(p.discount) || 0) > 0;
     return state.products.filter((p) =>
-      (state.filter === 'all' || p.gender === state.filter) &&
-      (!q || (p.name + ' ' + p.brand).toLowerCase().includes(q)));
+      (state.filter === 'all' || (state.filter === 'sale' ? onSale(p) : p.gender === state.filter)) &&
+      (!q || (p.name + ' ' + p.brand).toLowerCase().includes(q)))
+      // chegirmadagilar ro'yxat boshida — birinchi sahifada ko'rinib tursin
+      .sort((a, b) => onSale(b) - onSale(a));
   }
 
   function renderProducts() {
@@ -218,11 +433,13 @@
     const minSize = state.settings.sizes[0].ml;
     grid.innerHTML = shown.map((p, i) => {
       const pr = finalPrice(p, minSize);
+      const sale = (Number(p.discount) || 0) > 0;
       return `
-      <button type="button" class="p-card" data-id="${p.id}" style="--cd:${(i % PAGE_SIZE) * 0.04}s">
+      <button type="button" class="p-card${sale ? ' is-sale' : ''}" data-id="${p.id}" style="--cd:${(i % PAGE_SIZE) * 0.04}s">
         <div class="p-media">
           <div class="p-badges">${p.bestseller ? `<span class="badge badge-hit">${t('cat.hit')}</span>` : ''}${pr.discount ? `<span class="badge badge-sale">−${pr.discount}%</span>` : ''}</div>
           <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" />
+          ${sale ? `<span class="p-ribbon">${t('cat.saleRibbon')} −${pr.discount}%</span>` : ''}
         </div>
         <div class="p-info">
           <span class="p-brand">${escapeHtml(p.brand || '')}</span>
@@ -450,10 +667,15 @@
     const menuBtn = $('#menuBtn'), nav = $('#mobileNav');
     const toggleMenu = (open) => {
       nav.classList.toggle('is-open', open);
+      $('#navBackdrop').classList.toggle('is-open', open);
       menuBtn.setAttribute('aria-expanded', open);
       document.body.classList.toggle('no-scroll', open);
     };
     menuBtn.addEventListener('click', () => toggleMenu(!nav.classList.contains('is-open')));
+    $('#menuClose').addEventListener('click', () => toggleMenu(false));
+    $('#navBackdrop').addEventListener('click', () => toggleMenu(false));
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && nav.classList.contains('is-open')) toggleMenu(false); });
+    matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) toggleMenu(false); });
     $$('a', nav).forEach((a) => a.addEventListener('click', () => toggleMenu(false)));
 
     $$('.filter-tab').forEach((b) => b.addEventListener('click', () => {
@@ -510,6 +732,12 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') { closeModal(); closeLightbox(); }
+      if (!$('#lightbox').hidden) {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); stepLightbox(-1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); stepLightbox(1); }
+        if (e.key === 'Home') { e.preventDefault(); showLightbox(0, -1); }
+        if (e.key === 'End') { e.preventDefault(); showLightbox(lbState.items.length - 1, 1); }
+      }
     });
 
     $('#faqList').addEventListener('click', (e) => {
@@ -522,15 +750,7 @@
       q.setAttribute('aria-expanded', open);
     });
 
-    const lb = $('#lightbox');
-    $('#gallery').addEventListener('click', (e) => {
-      const g = e.target.closest('.g-item');
-      if (!g) return;
-      const img = $('img', g);
-      $('#lightboxImg').src = img.src; $('#lightboxImg').alt = img.alt;
-      lb.hidden = false; document.body.classList.add('no-scroll');
-    });
-    lb.addEventListener('click', closeLightbox);
+    initLightbox();
 
     const stage = $('#heroStage');
     if (stage && !reduceMotion && matchMedia('(hover: hover)').matches) {
@@ -540,11 +760,88 @@
       });
     }
   }
+  // ------------------------------------------------------------ gallery lightbox
+  // Chapga/o'ngga: o'q tugmalari, klaviatura (← →), barmoq bilan surish, rasmning chap/o'ng yarmini bosish.
+  const lbState = { items: [], i: 0, opener: null };
+  function initLightbox() {
+    const lb = $('#lightbox');
+    lbState.items = $$('#gallery .g-item');
+    $('#gallery').addEventListener('click', (e) => {
+      const g = e.target.closest('.g-item');
+      if (!g) return;
+      lbState.opener = g;
+      lb.hidden = false;
+      document.body.classList.add('no-scroll');
+      showLightbox(lbState.items.indexOf(g), 0);
+      $('#lbClose').focus({ preventScroll: true });
+    });
+    $('#lbClose').addEventListener('click', closeLightbox);
+    $('#lbPrev').addEventListener('click', () => stepLightbox(-1));
+    $('#lbNext').addEventListener('click', () => stepLightbox(1));
+    // Fonni bosish yopadi; rasm va izoh ustida emas
+    lb.addEventListener('click', (e) => { if (e.target === lb) closeLightbox(); });
+
+    const frame = $('#lbFrame'), img = $('#lightboxImg');
+    let drag = null;
+    frame.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
+    });
+    frame.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 8) { drag.moved = true; frame.setPointerCapture(drag.id); }
+      if (drag.moved) { img.style.transition = 'none'; img.style.transform = `translateX(${dx}px) rotate(${dx / 60}deg)`; img.style.opacity = 1 - Math.min(0.5, Math.abs(dx) / 600); }
+    });
+    const end = (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x, moved = drag.moved;
+      drag = null;
+      img.style.transition = ''; img.style.transform = ''; img.style.opacity = '';
+      if (moved) { if (Math.abs(dx) > 60) stepLightbox(dx < 0 ? 1 : -1); return; }
+      // oddiy bosish: rasmning chap yarmi — oldingi, o'ng yarmi — keyingi
+      const r = frame.getBoundingClientRect();
+      stepLightbox(e.clientX < r.left + r.width / 2 ? -1 : 1);
+    };
+    frame.addEventListener('pointerup', end);
+    frame.addEventListener('pointercancel', () => { drag = null; img.style.transition = ''; img.style.transform = ''; img.style.opacity = ''; });
+    frame.addEventListener('pointermove', (e) => {
+      if (drag) return;
+      const r = frame.getBoundingClientRect();
+      frame.classList.toggle('is-left', e.clientX < r.left + r.width / 2);
+    });
+  }
+  function stepLightbox(dir) {
+    const n = lbState.items.length;
+    showLightbox((lbState.i + dir + n) % n, dir);
+  }
+  function showLightbox(i, dir) {
+    const n = lbState.items.length;
+    lbState.i = i;
+    const g = lbState.items[i], src = $('img', g), img = $('#lightboxImg');
+    img.src = src.src;
+    img.alt = src.alt;
+    img.classList.remove('lb-in-l', 'lb-in-r', 'lb-in');
+    void img.offsetWidth; // animatsiyani qayta boshlash
+    img.classList.add(dir > 0 ? 'lb-in-r' : dir < 0 ? 'lb-in-l' : 'lb-in');
+    renderLightboxCaption();
+    // qo'shni rasmlarni oldindan yuklab qo'yish
+    [i - 1, i + 1].forEach((j) => { const im = $('img', lbState.items[(j + n) % n]); if (im) new Image().src = im.src; });
+  }
+  function renderLightboxCaption() {
+    const g = lbState.items[lbState.i];
+    if (!g || $('#lightbox').hidden) return;
+    const key = g.dataset.cap;
+    $('#lbCount').textContent = `${lbState.i + 1} / ${lbState.items.length}`;
+    $('#lbTitle').textContent = key ? t(`gal.${key}.t`) : '';
+    $('#lbDesc').textContent = key ? t(`gal.${key}.d`) : '';
+  }
   function closeLightbox() {
     const lb = $('#lightbox');
     if (lb.hidden) return;
     lb.hidden = true;
     if ($('#productModal').hidden) document.body.classList.remove('no-scroll');
+    if (lbState.opener) lbState.opener.focus({ preventScroll: true });
   }
 
   // ------------------------------------------------------------ boot
@@ -554,6 +851,9 @@
     bind();
     heroParticles();
     headerOnScroll();
+    initTheme();
+    initShowcase();
+    initDeals();
     const intro = runIntro();
 
     try {

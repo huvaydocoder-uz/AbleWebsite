@@ -59,9 +59,9 @@ const DEFAULT_SETTINGS = {
   globalDiscount: 0,          // butun saytga chegirma, %
   discountLabel: { uz: '', ru: '', en: '' },
   address: {
-    uz: 'Buxoro shahri',
-    ru: 'г. Бухара',
-    en: 'Bukhara, Uzbekistan',
+    uz: 'Buxoro shahri, Xavzi Nav ko‘chasi, 251-uy',
+    ru: 'г. Бухара, ул. Хавзи Нав, 251',
+    en: '251 Khavzi Nav St., Bukhara',
   },
   landmark: { uz: '', ru: '', en: '' },
   hours: '10:00 – 22:00',

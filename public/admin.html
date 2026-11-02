@@ -14,6 +14,12 @@
     body { font-family: Manrope, system-ui, sans-serif; }
     .tab-btn { display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border-radius:14px; color:rgba(248,240,227,.7); font-weight:600; font-size:14px; transition:background .3s,color .3s; }
     .tab-btn:hover { background:rgba(248,240,227,.06); color:#fdfaf4; }
+    .site-link { display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px; border:1px solid rgba(230,200,145,.45); color:#e6c891; font-weight:700; font-size:14px; white-space:nowrap; transition:background .3s,color .3s; }
+    .site-link svg { width:20px; height:20px; flex:none; }
+    .site-link .site-link-ext { width:14px; height:14px; margin-left:auto; opacity:.7; transition:transform .3s; }
+    .site-link:hover { background:linear-gradient(135deg,#fdfaf4,#e6c891); color:#2a0710; }
+    .site-link:hover .site-link-ext { transform:translate(2px,-2px); }
+    @media (min-width:1024px) { .site-link { margin-bottom:10px; } }
     .tab-btn.is-active { background:linear-gradient(135deg,#fdfaf4,#e6c891); color:#2a0710; }
     .tab-btn svg { width:18px; height:18px; flex:none; }
     .card { background:#fff; border:1px solid rgba(58,10,20,.08); border-radius:20px; }
@@ -35,7 +41,7 @@
     .pill { display:inline-flex; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; }
     .st-new { background:#fde8c8; color:#8a5300; } .st-confirmed { background:#dbe9ff; color:#1c4c94; }
     .st-done { background:#d9f2df; color:#1d6b35; } .st-cancelled { background:#f1e1e4; color:#8c2b3f; }
-    .switch { position:relative; width:42px; height:24px; flex:none; }
+    .switch { position:relative; display:inline-block; vertical-align:middle; width:42px; height:24px; flex:none; }
     .switch input { opacity:0; width:0; height:0; position:absolute; }
     .switch span { position:absolute; inset:0; background:rgba(58,10,20,.18); border-radius:99px; transition:background .25s; cursor:pointer; }
     .switch span::before { content:''; position:absolute; left:3px; top:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
@@ -79,6 +85,7 @@
   <div id="appView" class="hidden min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
     <aside class="bg-wine-900 text-cream-100 lg:min-h-screen lg:sticky lg:top-0 lg:h-screen flex lg:flex-col p-4 gap-2 overflow-x-auto">
       <a href="./" target="_blank" class="hidden lg:block px-3 pt-2 pb-8"><img src="assets/logo-cream.png" alt="Able Parfum" class="h-20" /></a>
+      <a href="./" target="_blank" rel="noopener" class="site-link shrink-0" title="Saytni yangi oynada ochish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10"/></svg><span>Saytga o'tish</span><svg class="site-link-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
       <nav class="flex lg:flex-col gap-1 flex-1" id="tabs">
         <button class="tab-btn is-active" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Statistika</span></button>
         <button class="tab-btn" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l2 5H4zM4 8h16v13H4zM9 12h6"/></svg><span>Buyurtmalar</span><b id="newBadge" class="hidden ml-auto text-[11px] px-2 py-0.5 rounded-full bg-gold-400 text-wine-900"></b></button>
