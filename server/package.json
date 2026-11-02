@@ -1,0 +1,12 @@
+{
+  "name": "able-parfum",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Able Parfum — premium atirlar do'koni sayti va admin panel",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js",
+    "setup-admin": "node setup-admin.js"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+server/.env
+server/data/orders.json
+server/data/stats.json
+server/data/admin.json
+server/data/settings.json

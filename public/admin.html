@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Able Parfum — Admin panel</title>
+  <link rel="icon" type="image/png" href="assets/logo-dark.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tailwind.css" />
+  <style>
+    body { font-family: Manrope, system-ui, sans-serif; }
+    .tab-btn { display:flex; align-items:center; gap:12px; width:100%; padding:12px 14px; border-radius:14px; color:rgba(248,240,227,.7); font-weight:600; font-size:14px; transition:background .3s,color .3s; }
+    .tab-btn:hover { background:rgba(248,240,227,.06); color:#fdfaf4; }
+    .tab-btn.is-active { background:linear-gradient(135deg,#fdfaf4,#e6c891); color:#2a0710; }
+    .tab-btn svg { width:18px; height:18px; flex:none; }
+    .card { background:#fff; border:1px solid rgba(58,10,20,.08); border-radius:20px; }
+    .inp { width:100%; padding:10px 12px; border-radius:12px; border:1.5px solid rgba(58,10,20,.14); background:#fff; color:#2a0710; outline:none; font-size:14px; transition:border-color .2s, box-shadow .2s; }
+    .inp:focus { border-color:#7d2236; box-shadow:0 0 0 4px rgba(125,34,54,.1); }
+    .inp::placeholder { color:#86656c; opacity:1; }
+    .lbl { display:block; font-size:12px; font-weight:600; color:rgba(58,10,20,.65); margin-bottom:6px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 18px; border-radius:99px; font-weight:600; font-size:14px; transition:transform .2s, opacity .2s, background .2s; }
+    .btn:active { transform:scale(.98); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-wine { background:linear-gradient(135deg,#641628,#3a0a14); color:#fdfaf4; }
+    .btn-gold { background:linear-gradient(135deg,#fdfaf4,#e6c891); color:#2a0710; }
+    .btn-line { border:1.5px solid rgba(58,10,20,.18); color:#3a0a14; background:#fff; }
+    .btn-line:hover { background:#f8f0e3; }
+    .btn-danger { color:#a3203a; border:1.5px solid rgba(163,32,58,.25); background:#fff; }
+    .btn-danger:hover { background:#fbe6ea; }
+    th { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:rgba(58,10,20,.72); font-weight:700; text-align:left; padding:12px 14px; white-space:nowrap; }
+    td { padding:12px 14px; border-top:1px solid rgba(58,10,20,.07); font-size:14px; vertical-align:middle; }
+    .pill { display:inline-flex; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; }
+    .st-new { background:#fde8c8; color:#8a5300; } .st-confirmed { background:#dbe9ff; color:#1c4c94; }
+    .st-done { background:#d9f2df; color:#1d6b35; } .st-cancelled { background:#f1e1e4; color:#8c2b3f; }
+    .switch { position:relative; width:42px; height:24px; flex:none; }
+    .switch input { opacity:0; width:0; height:0; position:absolute; }
+    .switch span { position:absolute; inset:0; background:rgba(58,10,20,.18); border-radius:99px; transition:background .25s; cursor:pointer; }
+    .switch span::before { content:''; position:absolute; left:3px; top:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+    .switch input:checked + span { background:#641628; }
+    .switch input:checked + span::before { transform:translateX(18px); }
+    .toast { position:fixed; left:50%; bottom:24px; transform:translate(-50%,200%); opacity:0; padding:12px 20px; border-radius:14px; background:#2a0710; color:#fdfaf4; font-weight:600; font-size:14px; box-shadow:0 20px 40px rgba(0,0,0,.25); transition:transform .4s cubic-bezier(.22,1,.36,1); z-index:100; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    .bar { transition:height .8s cubic-bezier(.22,1,.36,1); }
+    dialog::backdrop { background:rgba(20,3,8,.6); backdrop-filter:blur(4px); }
+    dialog { border:none; padding:0; border-radius:24px; width:min(760px, calc(100vw - 24px)); max-height:calc(100dvh - 24px); }
+    .p-thumb { width:52px; height:52px; border-radius:12px; object-fit:contain; background:#f8f0e3; padding:4px; }
+  </style>
+</head>
+<body class="bg-cream-100 text-wine-900 min-h-screen">
+
+  <!-- ===================================================== LOGIN -->
+  <section id="loginView" class="min-h-screen grid lg:grid-cols-2">
+    <div class="hidden lg:flex relative bg-wine-900 items-center justify-center overflow-hidden">
+      <img src="assets/shop/10-bags.jpg" alt="" class="absolute inset-0 w-full h-full object-cover opacity-40" />
+      <div class="absolute inset-0 bg-gradient-to-t from-wine-950 via-wine-900/60 to-transparent"></div>
+      <div class="relative text-center px-10">
+        <img src="assets/logo-cream.png" alt="Able Parfum" class="h-40 mx-auto" />
+        <p class="font-display text-3xl text-cream-100 mt-8 italic">Boshqaruv paneli</p>
+      </div>
+    </div>
+    <div class="flex items-center justify-center p-6">
+      <form id="loginForm" class="w-full max-w-sm">
+        <img src="assets/logo-dark.png" alt="Able Parfum" class="h-20 mb-10 lg:hidden" />
+        <h1 class="font-display text-5xl text-wine-900">Xush kelibsiz</h1>
+        <p class="text-wine-800/80 mt-2">Admin panelga kirish uchun ma'lumotlaringizni kiriting.</p>
+        <label class="block mt-8"><span class="lbl">Login (email)</span><input class="inp" name="email" type="email" autocomplete="username" required /></label>
+        <label class="block mt-4"><span class="lbl">Parol</span><input class="inp" name="password" type="password" autocomplete="current-password" required /></label>
+        <p id="loginError" class="hidden mt-4 text-sm text-red-700 bg-red-50 rounded-xl px-3 py-2"></p>
+        <button class="btn btn-wine w-full mt-6 py-3" type="submit">Kirish</button>
+        <a href="./" class="block text-center text-sm text-wine-600 mt-6">← Saytga qaytish</a>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================================================== APP -->
+  <div id="appView" class="hidden min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+    <aside class="bg-wine-900 text-cream-100 lg:min-h-screen lg:sticky lg:top-0 lg:h-screen flex lg:flex-col p-4 gap-2 overflow-x-auto">
+      <a href="./" target="_blank" class="hidden lg:block px-3 pt-2 pb-8"><img src="assets/logo-cream.png" alt="Able Parfum" class="h-20" /></a>
+      <nav class="flex lg:flex-col gap-1 flex-1" id="tabs">
+        <button class="tab-btn is-active" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Statistika</span></button>
+        <button class="tab-btn" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l2 5H4zM4 8h16v13H4zM9 12h6"/></svg><span>Buyurtmalar</span><b id="newBadge" class="hidden ml-auto text-[11px] px-2 py-0.5 rounded-full bg-gold-400 text-wine-900"></b></button>
+        <button class="tab-btn" data-tab="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.6-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.8 5"/></svg><span>Mijozlar</span></button>
+        <button class="tab-btn" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6v3H9zM10 6h4v2h-4zM6 8h12v13H6z"/></svg><span>Mahsulotlar</span></button>
+        <button class="tab-btn" data-tab="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9h9v9l-9 9zM16 8h.01"/></svg><span>Narx va chegirma</span></button>
+        <button class="tab-btn" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Sozlamalar</span></button>
+      </nav>
+      <button id="logoutBtn" class="tab-btn lg:mt-auto shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Chiqish</span></button>
+    </aside>
+
+    <main class="p-4 sm:p-8 lg:p-10 min-w-0">
+      <!-- ---------------- STATISTIKA -->
+      <section data-view="stats">
+        <div class="flex items-end justify-between gap-4 flex-wrap">
+          <div><h1 class="font-display text-5xl">Statistika</h1><p class="text-wine-800/80 mt-1">Sayt orqali kelgan buyurtmalar va tashriflar</p></div>
+          <button class="btn btn-line" data-refresh>Yangilash</button>
+        </div>
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mt-8" id="kpis"></div>
+        <div class="grid xl:grid-cols-[1.6fr_1fr] gap-4 mt-4">
+          <div class="card p-6">
+            <div class="flex justify-between items-center"><h2 class="font-semibold">So'nggi 14 kun: buyurtmalar</h2><span class="text-xs text-wine-800/80" id="chartLegend"></span></div>
+            <div class="h-56 mt-6 flex items-end gap-2" id="chart"></div>
+            <div class="flex gap-2 mt-2 text-[10px] text-wine-800/80" id="chartLabels"></div>
+          </div>
+          <div class="card p-6">
+            <h2 class="font-semibold">Eng ko'p buyurtma qilingan atirlar</h2>
+            <ol class="mt-4 space-y-3" id="topList"></ol>
+            <h2 class="font-semibold mt-8">Hajmlar bo'yicha</h2>
+            <div class="mt-4 space-y-2" id="sizeList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------------- BUYURTMALAR (CRM) -->
+      <section data-view="orders" class="hidden">
+        <div class="flex items-end justify-between gap-4 flex-wrap">
+          <div><h1 class="font-display text-5xl">Buyurtmalar</h1><p class="text-wine-800/80 mt-1">Barcha buyurtmalar tarixi va holati</p></div>
+          <div class="flex gap-2 flex-wrap">
+            <button class="btn btn-line" data-refresh>Yangilash</button>
+            <button class="btn btn-gold" id="exportCsv">Excel (CSV) yuklab olish</button>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-6">
+          <input class="inp max-w-xs" id="orderSearch" placeholder="Ism, telefon yoki buyurtma raqami…" />
+          <select class="inp max-w-[200px]" id="orderStatus">
+            <option value="">Barcha holatlar</option><option value="new">Yangi</option><option value="confirmed">Tasdiqlangan</option><option value="done">Bajarilgan</option><option value="cancelled">Bekor qilingan</option>
+          </select>
+        </div>
+        <div class="card mt-4 overflow-x-auto">
+          <table class="w-full min-w-[980px]">
+            <thead><tr><th>№</th><th>Sana</th><th>Mijoz</th><th>Buyurtma</th><th>Summa</th><th>Olish</th><th>Holat</th><th>Izoh (admin)</th></tr></thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+          <p class="hidden text-center py-14 text-wine-800/80" id="ordersEmpty">Hozircha buyurtmalar yo'q.</p>
+        </div>
+      </section>
+
+      <!-- ---------------- MIJOZLAR -->
+      <section data-view="customers" class="hidden">
+        <h1 class="font-display text-5xl">Mijozlar</h1>
+        <p class="text-wine-800/80 mt-1">Telefon raqami bo'yicha guruhlangan mijozlar ro'yxati</p>
+        <div class="card mt-6 overflow-x-auto">
+          <table class="w-full min-w-[720px]">
+            <thead><tr><th>Mijoz</th><th>Telefon</th><th>Buyurtmalar</th><th>Jami summa</th><th>Oxirgi buyurtma</th><th>Sevimli atir</th></tr></thead>
+            <tbody id="customersBody"></tbody>
+          </table>
+          <p class="hidden text-center py-14 text-wine-800/80" id="customersEmpty">Hozircha mijozlar yo'q.</p>
+        </div>
+      </section>
+
+      <!-- ---------------- MAHSULOTLAR -->
+      <section data-view="products" class="hidden">
+        <div class="flex items-end justify-between gap-4 flex-wrap">
+          <div><h1 class="font-display text-5xl">Mahsulotlar</h1><p class="text-wine-800/80 mt-1"><span id="prodCount"></span> ta atir · chegirma va ko'rinishni shu yerda boshqaring</p></div>
+          <button class="btn btn-wine" id="addProduct">+ Yangi mahsulot</button>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-6">
+          <input class="inp max-w-xs" id="prodSearch" placeholder="Nomi yoki brend…" />
+          <select class="inp max-w-[180px]" id="prodGender"><option value="">Hammasi</option><option value="men">Erkaklar</option><option value="women">Ayollar</option><option value="unisex">Uniseks</option></select>
+        </div>
+        <div class="card mt-4 overflow-x-auto">
+          <table class="w-full min-w-[900px]">
+            <thead><tr><th></th><th>Nomi</th><th>Jinsi</th><th>Chegirma %</th><th>10 ml narxi</th><th>Xit</th><th>Saytda</th><th></th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ---------------- NARX VA CHEGIRMA -->
+      <section data-view="prices" class="hidden max-w-4xl">
+        <h1 class="font-display text-5xl">Narx va chegirma</h1>
+        <p class="text-wine-800/80 mt-1">Narxni o'zgartirsangiz, saytdagi barcha atirlar narxi avtomatik yangilanadi.</p>
+        <div class="card p-6 mt-8">
+          <h2 class="font-semibold">Hajmlar va standart narxlar</h2>
+          <div class="mt-5 space-y-3" id="sizesEditor"></div>
+          <button class="btn btn-line mt-4" id="addSize">+ Hajm qo'shish</button>
+        </div>
+        <div class="card p-6 mt-4">
+          <h2 class="font-semibold">Umumiy chegirma (butun sayt uchun)</h2>
+          <p class="text-sm text-wine-800/80 mt-1">Masalan, bayram aksiyasi. Agar mahsulotning o'z chegirmasi kattaroq bo'lsa, o'shanisi qo'llanadi. 0 — chegirma yo'q.</p>
+          <div class="grid sm:grid-cols-[160px_1fr] gap-4 mt-5">
+            <label><span class="lbl">Chegirma, %</span><input class="inp" type="number" min="0" max="90" id="globalDiscount" /></label>
+            <div class="grid sm:grid-cols-3 gap-3">
+              <label><span class="lbl">Aksiya matni (uz)</span><input class="inp" id="dlUz" placeholder="Navro'z aksiyasi: −15%" /></label>
+              <label><span class="lbl">(ru)</span><input class="inp" id="dlRu" placeholder="Акция: −15%" /></label>
+              <label><span class="lbl">(en)</span><input class="inp" id="dlEn" placeholder="Sale: −15%" /></label>
+            </div>
+          </div>
+        </div>
+        <div class="card p-6 mt-4">
+          <h2 class="font-semibold">Saytda qanday ko'rinadi</h2>
+          <div class="flex flex-wrap gap-3 mt-4" id="pricePreview"></div>
+        </div>
+        <button class="btn btn-wine mt-6 px-8 py-3" id="savePrices">Saqlash</button>
+      </section>
+
+      <!-- ---------------- SOZLAMALAR -->
+      <section data-view="settings" class="hidden max-w-4xl">
+        <h1 class="font-display text-5xl">Sozlamalar</h1>
+
+        <div class="card p-6 mt-8">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <h2 class="font-semibold">Telegram bot (buyurtmalar @shuxratgafurov1 ga kelishi uchun)</h2>
+            <span id="tgStatus" class="pill"></span>
+          </div>
+          <ol class="mt-4 text-sm text-wine-800/75 space-y-1.5 list-decimal pl-5">
+            <li>Telegramda <a class="text-wine-600 underline" href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> ni oching, <b>/newbot</b> yuboring va botga nom bering (masalan, <i>Able Parfum Buyurtmalar</i>).</li>
+            <li>BotFather bergan <b>tokenni</b> pastdagi maydonga joylang va «Saqlash»ni bosing.</li>
+            <li><b>@shuxratgafurov1</b> akkauntidan yangi botni oching va <b>/start</b> bosing.</li>
+            <li>«Chat ID ni topish» tugmasini bosing, ro'yxatdan Shuhrat akani tanlang va «Sinov xabari» bilan tekshiring.</li>
+          </ol>
+          <div class="grid sm:grid-cols-2 gap-4 mt-5">
+            <label><span class="lbl">Bot tokeni</span><input class="inp" id="tgToken" placeholder="123456789:AA..." autocomplete="off" /></label>
+            <label><span class="lbl">Chat ID</span><input class="inp" id="tgChat" placeholder="Masalan: 123456789" /></label>
+          </div>
+          <div id="tgChats" class="mt-3 flex flex-wrap gap-2"></div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <button class="btn btn-wine" id="tgSave">Saqlash</button>
+            <button class="btn btn-line" id="tgFind">Chat ID ni topish</button>
+            <button class="btn btn-line" id="tgTest">Sinov xabari</button>
+          </div>
+        </div>
+
+        <div class="card p-6 mt-4">
+          <h2 class="font-semibold">Manzil va ish vaqti (saytdagi «Bizning manzil» bo'limi)</h2>
+          <div class="grid sm:grid-cols-3 gap-3 mt-5">
+            <label><span class="lbl">Manzil (uz)</span><input class="inp" id="adUz" /></label>
+            <label><span class="lbl">Адрес (ru)</span><input class="inp" id="adRu" /></label>
+            <label><span class="lbl">Address (en)</span><input class="inp" id="adEn" /></label>
+            <label><span class="lbl">Mo'ljal (uz)</span><input class="inp" id="lmUz" /></label>
+            <label><span class="lbl">Ориентир (ru)</span><input class="inp" id="lmRu" /></label>
+            <label><span class="lbl">Landmark (en)</span><input class="inp" id="lmEn" /></label>
+            <label><span class="lbl">Ish vaqti</span><input class="inp" id="hours" placeholder="10:00 – 22:00" /></label>
+          </div>
+          <button class="btn btn-wine mt-5" id="saveAddress">Saqlash</button>
+        </div>
+
+        <div class="card p-6 mt-4">
+          <h2 class="font-semibold">Admin parolini almashtirish</h2>
+          <p class="text-sm text-wine-800/80 mt-2">Xavfsizlik uchun parol faqat serverda, shifrlangan (xeshlangan) holda saqlanadi. Almashtirish uchun serverda quyidagi buyruqni bajaring:</p>
+          <pre class="mt-3 p-4 rounded-xl bg-wine-900 text-cream-100 text-xs overflow-x-auto">node server/setup-admin.js ableparfume@gmail.com "YangiParol"</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===================================================== PRODUCT EDITOR -->
+  <dialog id="prodDialog">
+    <form id="prodForm" class="bg-cream-50 p-6 sm:p-8" method="dialog">
+      <div class="flex justify-between items-start gap-4">
+        <h2 class="font-display text-4xl" id="prodDialogTitle">Mahsulot</h2>
+        <button type="button" class="text-3xl leading-none text-wine-800/80 hover:text-wine-800" data-dclose>×</button>
+      </div>
+      <div class="grid sm:grid-cols-[180px_1fr] gap-6 mt-6">
+        <div>
+          <label class="block cursor-pointer">
+            <div class="aspect-square rounded-2xl bg-white border-2 border-dashed border-wine-800/20 grid place-items-center overflow-hidden">
+              <img id="pfPreview" src="assets/logo-dark.png" class="w-full h-full object-contain hidden" alt="" />
+              <span id="pfPlaceholder" class="text-sm text-wine-800/80 text-center px-4">Rasm yuklash<br /><small>(PNG/JPG, 5 MB gacha)</small></span>
+            </div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" id="pfImage" class="hidden" />
+          </label>
+          <p class="text-xs text-wine-800/80 mt-2">Oq fonli rasm eng chiroyli ko'rinadi.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="col-span-2"><span class="lbl">Nomi *</span><input class="inp" name="name" required maxlength="80" /></label>
+          <label><span class="lbl">Brend</span><input class="inp" name="brand" maxlength="80" /></label>
+          <label><span class="lbl">Jinsi</span><select class="inp" name="gender"><option value="men">Erkaklar</option><option value="women">Ayollar</option><option value="unisex">Uniseks</option></select></label>
+          <label><span class="lbl">Hid oilasi</span><select class="inp" name="family">
+            <option value="fresh">Yangi va toza</option><option value="aquatic">Dengiz, suvli</option><option value="woody">Yog'ochli</option><option value="oriental">Sharqona</option><option value="floral">Gulli</option><option value="fruity">Mevali</option><option value="gourmand">Shirin, gurman</option><option value="leather">Charm</option><option value="amber">Ambrali</option><option value="citrus">Sitrusli</option><option value="spicy">Ziravorli</option>
+          </select></label>
+          <label><span class="lbl">Intensivlik (1–5)</span><input class="inp" name="intensity" type="number" min="1" max="5" value="3" /></label>
+          <label><span class="lbl">Yuqori nota</span><input class="inp" name="top" maxlength="60" /></label>
+          <label><span class="lbl">Yurak notasi</span><input class="inp" name="heart" maxlength="60" /></label>
+          <label><span class="lbl">Baza notasi</span><input class="inp" name="base" maxlength="60" /></label>
+          <label><span class="lbl">Chegirma, %</span><input class="inp" name="discount" type="number" min="0" max="90" value="0" /></label>
+        </div>
+      </div>
+      <details class="mt-5">
+        <summary class="cursor-pointer text-sm font-semibold text-wine-700">Maxsus tavsif (ixtiyoriy — bo'sh qolsa, avtomatik tavsif chiqadi)</summary>
+        <div class="grid gap-3 mt-3">
+          <textarea class="inp" name="descUz" rows="2" placeholder="Tavsif (uz)"></textarea>
+          <textarea class="inp" name="descRu" rows="2" placeholder="Описание (ru)"></textarea>
+          <textarea class="inp" name="descEn" rows="2" placeholder="Description (en)"></textarea>
+        </div>
+      </details>
+      <div class="flex flex-wrap items-center gap-6 mt-5">
+        <label class="flex items-center gap-3 text-sm font-semibold"><span class="switch"><input type="checkbox" name="bestseller" /><span></span></span>«Xit» belgisi</label>
+        <label class="flex items-center gap-3 text-sm font-semibold"><span class="switch"><input type="checkbox" name="active" checked /><span></span></span>Saytda ko'rinadi</label>
+      </div>
+      <div class="flex justify-between gap-3 mt-8">
+        <button type="button" class="btn btn-danger" id="pfDelete">O'chirish</button>
+        <div class="flex gap-2"><button type="button" class="btn btn-line" data-dclose>Bekor qilish</button><button type="submit" class="btn btn-wine px-8">Saqlash</button></div>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+  <script src="js/admin.js"></script>
+</body>
+</html>
