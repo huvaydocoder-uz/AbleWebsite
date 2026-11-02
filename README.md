@@ -16,6 +16,8 @@ able-parfum/
 │   ├── js/admin.js         ← admin panel logikasi
 │   ├── data/catalog.json   ← zaxira katalog (server ishlamasa)
 │   └── assets/             ← logo, atirlar (products/), do'kon (shop/), asoschi (founder/)
+├── api/index.js            ← Vercel funksiyasi (server.js ishlovchisini chaqiradi)
+├── vercel.json             ← Vercel sozlamasi (public/ + /api/* yo'naltirish)
 └── server/
     ├── server.js           ← backend (Node.js, qo'shimcha kutubxonasiz)
     ├── seed-products.js    ← boshlang'ich 62 ta atir
@@ -67,9 +69,33 @@ Bot ulanmagan paytda ham buyurtma yo'qolmaydi: u admin paneldagi «Buyurtmalar»
 | Narx va chegirma | 10/20/30/50 ml narxlari (o'zgarishi bilan saytdagi hamma narxlar yangilanadi), butun sayt uchun chegirma va aksiya matni |
 | Sozlamalar | Telegram bot, manzil matni (3 tilda), mo'ljal, ish vaqti |
 
-## Internetga joylash (hosting)
+## Vercel'ga joylash (sayt + admin panel)
 
-Sayt Node.js serverda ishlaydi, shuning uchun oddiy «faqat HTML» hosting emas, **VPS** yoki Node.js qo'llaydigan hosting kerak:
+Loyiha Vercel uchun tayyor: sayt `public/` dan, API esa `api/index.js` funksiyasidan ishlaydi (`vercel.json`).
+Vercel'da disk saqlanmagani uchun ma'lumotlar **Upstash Redis**'da, admin yuklagan rasmlar **Vercel Blob**'da saqlanadi.
+
+1. **vercel.com → Add New → Project** → GitHub'dan `AbleWebsite` repozitoriyini tanlang → **Import**.
+   Framework: **Other** (qolgan sozlamalarni `vercel.json` o'zi beradi) → **Deploy**.
+2. Loyiha ichida **Storage → Create Database → Upstash (Redis)** → yarating va shu loyihaga ulang.
+   `KV_REST_API_URL` va `KV_REST_API_TOKEN` o'zgaruvchilari avtomatik qo'shiladi.
+3. **Storage → Create → Blob** → yarating va loyihaga ulang (`BLOB_READ_WRITE_TOKEN` avtomatik qo'shiladi).
+4. **Settings → Environment Variables** ga qo'shing:
+
+   | O'zgaruvchi | Qiymat |
+   |---|---|
+   | `ADMIN_EMAIL` | `ableparfume@gmail.com` |
+   | `ADMIN_PASSWORD` | kuchli parol (kamida 8 belgi) |
+   | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | ixtiyoriy — admin → Sozlamalar'dan ham kiritsa bo'ladi |
+
+5. **Deployments → ⋯ → Redeploy**. Tayyor: sayt `https://<loyiha>.vercel.app`, admin — `/admin`.
+
+Birinchi ochilishda mahsulotlar va sozlamalar `server/seed-products.js` dan Redis'ga avtomatik yoziladi.
+Admin parolini almashtirish: `ADMIN_PASSWORD` ni yangilab, Redeploy qiling (eski kirishlar bekor bo'ladi).
+Baza ulanmagan bo'lsa ham sayt ochiladi, lekin admin panelda saqlash «storage_not_configured» xatosini beradi.
+
+## O'z serveringizga joylash (VPS va h.k.)
+
+Sayt Node.js serverda ham ishlaydi — u holda **VPS** yoki Node.js qo'llaydigan hosting kerak:
 
 - **VPS (tavsiya etiladi)** — masalan, Ubuntu server: `node server/server.js` ni `pm2` bilan doimiy ishga tushiring, oldiga Nginx + bepul SSL (Let's Encrypt) qo'ying.
 - **Render / Railway / Fly.io** — «Start command»: `node server/server.js`. `server/data` papkasi uchun doimiy disk (persistent volume) ulang, aks holda qayta ishga tushganda buyurtmalar o'chib ketadi.

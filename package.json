@@ -1,0 +1,13 @@
+{
+  "name": "able-parfum-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Able Parfum — sayt va admin panel (Vercel uchun ildiz paket)",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2"
+  }
+}

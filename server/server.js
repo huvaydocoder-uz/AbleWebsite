@@ -5,7 +5,10 @@
  *   node server.js            → http://localhost:3000
  *   Admin panel               → http://localhost:3000/admin
  *
- * Ma'lumotlar server/data/ papkasidagi JSON fayllarda saqlanadi.
+ * Ma'lumotlar:
+ *   - lokal: server/data/ papkasidagi JSON fayllarda;
+ *   - Vercel: Upstash Redis'da (UPSTASH_REDIS_REST_URL/TOKEN yoki KV_REST_API_URL/TOKEN),
+ *     rasmlar Vercel Blob'da (BLOB_READ_WRITE_TOKEN). Vercel kirish nuqtasi: api/index.js
  */
 'use strict';
 
@@ -22,9 +25,10 @@ const ROOT = path.resolve(__dirname, '..', 'public');
 const DATA = path.resolve(__dirname, 'data');
 const UPLOADS = path.join(ROOT, 'uploads');
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
-
-fs.mkdirSync(DATA, { recursive: true });
-fs.mkdirSync(UPLOADS, { recursive: true });
+const ON_VERCEL = !!process.env.VERCEL;
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+const REDIS_PREFIX = 'able:';
 
 function loadDotEnv(file) {
   if (!fs.existsSync(file)) return;
@@ -35,17 +39,49 @@ function loadDotEnv(file) {
 }
 
 // ---------------------------------------------------------------- storage
-const store = {
+// Bir xil interfeys, ikki xil joy: lokal disk yoki Upstash Redis (Vercel'da disk saqlanmaydi).
+const fileBackend = {
   file: (name) => path.join(DATA, name + '.json'),
-  read(name, fallback) {
+  async read(name) {
     try { return JSON.parse(fs.readFileSync(this.file(name), 'utf8')); }
-    catch { return typeof fallback === 'function' ? fallback() : fallback; }
+    catch { return undefined; }
   },
-  write(name, value) {
+  async write(name, value) {
+    fs.mkdirSync(DATA, { recursive: true });
     const f = this.file(name);
     const tmp = f + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(value, null, 2));
     fs.renameSync(tmp, f); // atomik yozish: fayl hech qachon yarim holatda qolmaydi
+  },
+};
+const redisBackend = {
+  async cmd(args) {
+    const r = await fetch(REDIS_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(args),
+    });
+    const j = await r.json();
+    if (j.error) throw new Error('redis: ' + j.error);
+    return j.result;
+  },
+  async read(name) {
+    const v = await this.cmd(['GET', REDIS_PREFIX + name]);
+    return v == null ? undefined : JSON.parse(v);
+  },
+  async write(name, value) { await this.cmd(['SET', REDIS_PREFIX + name, JSON.stringify(value)]); },
+};
+const backend = REDIS_URL && REDIS_TOKEN ? redisBackend : fileBackend;
+const store = {
+  kind: backend === redisBackend ? 'redis' : 'file',
+  async read(name, fallback) {
+    const v = await backend.read(name);
+    return v === undefined ? (typeof fallback === 'function' ? fallback() : fallback) : v;
+  },
+  async write(name, value) {
+    // Vercel'da bazasiz yozib bo'lmaydi — admin aniq xato ko'rsin
+    if (backend === fileBackend && ON_VERCEL) throw Object.assign(new Error('storage_not_configured'), { status: 503 });
+    await backend.write(name, value);
   },
 };
 
@@ -68,16 +104,16 @@ const DEFAULT_SETTINGS = {
   telegram: { botToken: '', chatId: '' },
 };
 
-function getSettings() {
-  const s = store.read('settings', null);
+async function getSettings() {
+  const s = await store.read('settings', null);
   if (s) return { ...DEFAULT_SETTINGS, ...s, telegram: { ...DEFAULT_SETTINGS.telegram, ...(s.telegram || {}) } };
-  store.write('settings', DEFAULT_SETTINGS);
+  await store.write('settings', DEFAULT_SETTINGS).catch(() => {}); // baza ulanmagan bo'lsa ham sayt ochilsin
   return structuredClone(DEFAULT_SETTINGS);
 }
 
-function getProducts() {
-  let p = store.read('products', null);
-  if (!p) { p = require('./seed-products'); store.write('products', p); }
+async function getProducts() {
+  let p = await store.read('products', null);
+  if (!p) { p = structuredClone(require('./seed-products')); await store.write('products', p).catch(() => {}); }
   return p;
 }
 
@@ -115,30 +151,48 @@ function verifyPassword(password, rec) {
   const { hash } = hashPassword(password, rec.salt);
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(rec.hash, 'hex'));
 }
-function ensureAdmin() {
-  let admin = store.read('admin', null);
-  if (!admin && process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    admin = { email: process.env.ADMIN_EMAIL.toLowerCase(), ...hashPassword(process.env.ADMIN_PASSWORD) };
-    store.write('admin', admin);
+// Admin: ADMIN_EMAIL + ADMIN_PASSWORD muhit o'zgaruvchilari berilgan bo'lsa (Vercel), shular ishlatiladi —
+// parolni almashtirish = Vercel'da o'zgaruvchini yangilab, qayta deploy qilish. Aks holda data/admin.json.
+let envAdmin = null;
+async function ensureAdmin() {
+  const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    const email = ADMIN_EMAIL.trim().toLowerCase();
+    if (!envAdmin || envAdmin.email !== email || envAdmin.src !== ADMIN_PASSWORD) {
+      // tuz barqaror: hamma serverless nusxalarda bir xil xesh -> bir xil sessiya kaliti
+      const salt = crypto.createHash('sha256').update('able-admin:' + email).digest('hex').slice(0, 32);
+      envAdmin = { email, ...hashPassword(ADMIN_PASSWORD, salt), src: ADMIN_PASSWORD };
+    }
+    return { email: envAdmin.email, salt: envAdmin.salt, hash: envAdmin.hash };
   }
-  return admin;
+  return store.read('admin', null);
 }
 
-const sessions = new Map(); // token -> expiresAt
-function newSession() {
-  const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, Date.now() + TOKEN_TTL_MS);
-  return token;
+// Sessiya: server xotirasiga bog'liq bo'lmagan imzolangan token ("muddat.imzo").
+// Serverless'da har so'rov boshqa nusxaga tushishi mumkin, shuning uchun xotiradagi ro'yxat ishlamaydi.
+// Kalit parol xeshidan olinadi — parol almashsa, barcha eski tokenlar bekor bo'ladi.
+async function sessionKey() {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  const a = await ensureAdmin();
+  return a ? a.salt + ':' + a.hash : null;
 }
-function isAuthed(req) {
-  const m = (req.headers.authorization || '').match(/^Bearer ([a-f0-9]{64})$/);
-  if (!m) return false;
-  const exp = sessions.get(m[1]);
-  if (!exp || exp < Date.now()) { sessions.delete(m[1]); return false; }
-  return true;
+const sign = (key, payload) => crypto.createHmac('sha256', key).update(payload).digest('base64url');
+async function newSession() {
+  const exp = String(Date.now() + TOKEN_TTL_MS);
+  return exp + '.' + sign(await sessionKey(), exp);
+}
+async function isAuthed(req) {
+  const m = (req.headers.authorization || '').match(/^Bearer (\d{12,16})\.([\w-]{43})$/);
+  if (!m || Number(m[1]) < Date.now()) return false;
+  const key = await sessionKey();
+  if (!key) return false;
+  const expect = Buffer.from(sign(key, m[1]));
+  const got = Buffer.from(m[2]);
+  return expect.length === got.length && crypto.timingSafeEqual(expect, got);
 }
 
-// Oddiy rate-limit: IP bo'yicha oyna ichida urinishlar soni
+// Oddiy rate-limit: IP bo'yicha oyna ichida urinishlar soni.
+// Serverless'da har nusxaning o'z hisobi bor — to'liq kafolat emas, lekin parol tanlashni sekinlashtiradi.
 const buckets = new Map();
 function limited(key, max, windowMs) {
   const now = Date.now();
@@ -190,16 +244,16 @@ function orderMessage(o) {
 }
 
 // ---------------------------------------------------------------- stats
-function bumpVisit() {
-  const s = store.read('stats', { visits: {} });
+async function bumpVisit() {
+  const s = await store.read('stats', { visits: {} });
   const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
   s.visits[day] = (s.visits[day] || 0) + 1;
-  store.write('stats', s);
+  await store.write('stats', s).catch(() => {}); // statistika yozilmasa ham sayt ishlayversin
 }
 
-function buildStats() {
-  const orders = store.read('orders', []);
-  const { visits } = store.read('stats', { visits: {} });
+async function buildStats() {
+  const orders = await store.read('orders', []);
+  const { visits } = await store.read('stats', { visits: {} });
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
   const dayOf = (iso) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
   const valid = orders.filter((o) => o.status !== 'cancelled');
@@ -254,6 +308,16 @@ function send(res, status, body, headers = {}) {
 }
 
 function readBody(req, limit = 8 * 1024 * 1024) {
+  // Vercel tanani oldindan o'qib req.body ga qo'yadi; lokal http serverda u yo'q — oqimdan o'qiymiz
+  let pre;
+  try { pre = req.body; } catch { return Promise.reject(Object.assign(new Error('bad_json'), { status: 400 })); }
+  if (pre != null) {
+    if (typeof pre === 'object' && !Buffer.isBuffer(pre)) return Promise.resolve(pre);
+    const text = Buffer.isBuffer(pre) ? pre.toString('utf8') : String(pre);
+    if (Buffer.byteLength(text) > limit) return Promise.reject(Object.assign(new Error('too_large'), { status: 413 }));
+    try { return Promise.resolve(text ? JSON.parse(text) : {}); }
+    catch { return Promise.reject(Object.assign(new Error('bad_json'), { status: 400 })); }
+  }
   return new Promise((resolve, reject) => {
     let size = 0; const chunks = [];
     req.on('data', (c) => {
@@ -270,7 +334,7 @@ function readBody(req, limit = 8 * 1024 * 1024) {
 }
 
 function clientIp(req) {
-  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress;
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket && req.socket.remoteAddress) || '';
 }
 
 function serveStatic(req, res, pathname) {
@@ -290,12 +354,21 @@ function serveStatic(req, res, pathname) {
 const clean = (v, max = 200) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 const slugify = (s) => clean(s, 80).toLowerCase().normalize('NFKD').replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '') || 'product';
 
-function saveImage(dataUrl, id) {
+// Rasm: Vercel'da — Vercel Blob (to'liq URL qaytadi), lokalda — public/uploads/
+async function saveImage(dataUrl, id) {
   const m = /^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
   if (!m) return null;
   const ext = m[1] === 'jpeg' ? 'jpg' : m[1];
   const name = `${id}-${Date.now().toString(36)}.${ext}`;
-  fs.writeFileSync(path.join(UPLOADS, name), Buffer.from(m[2], 'base64'));
+  const buf = Buffer.from(m[2], 'base64');
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = require('@vercel/blob');
+    const blob = await put('products/' + name, buf, { access: 'public', contentType: 'image/' + (ext === 'jpg' ? 'jpeg' : ext) });
+    return blob.url;
+  }
+  if (ON_VERCEL) throw Object.assign(new Error('image_storage_not_configured'), { status: 503 });
+  fs.mkdirSync(UPLOADS, { recursive: true });
+  fs.writeFileSync(path.join(UPLOADS, name), buf);
   return 'uploads/' + name;
 }
 
@@ -324,14 +397,14 @@ async function api(req, res, pathname) {
 
   // ---- public
   if (method === 'GET' && pathname === '/api/catalog') {
-    const s = getSettings();
-    const products = getProducts().filter((p) => p.active).sort((a, b) => a.order - b.order)
+    const s = await getSettings();
+    const products = (await getProducts()).filter((p) => p.active).sort((a, b) => a.order - b.order)
       .map((p) => ({ ...p, effectiveDiscount: effectiveDiscount(p, s) }));
     return send(res, 200, { settings: publicSettings(s), products }, { 'Cache-Control': 'no-store' });
   }
 
   if (method === 'POST' && pathname === '/api/visit') {
-    if (!limited('visit:' + ip, 3, 60 * 60 * 1000)) bumpVisit();
+    if (!limited('visit:' + ip, 3, 60 * 60 * 1000)) await bumpVisit();
     return send(res, 204, '');
   }
 
@@ -342,8 +415,8 @@ async function api(req, res, pathname) {
     const phone = clean(b.phone, 30);
     if (name.length < 2 || phone.replace(/\D/g, '').length < 9) return send(res, 400, { error: 'invalid_contact' });
 
-    const s = getSettings();
-    const products = getProducts();
+    const s = await getSettings();
+    const products = await getProducts();
     const items = [];
     for (const it of (Array.isArray(b.items) ? b.items : []).slice(0, 20)) {
       const p = products.find((x) => x.id === it.productId && x.active);
@@ -354,7 +427,7 @@ async function api(req, res, pathname) {
     }
     if (!items.length) return send(res, 400, { error: 'empty' });
 
-    const orders = store.read('orders', []);
+    const orders = await store.read('orders', []);
     const seq = (orders.reduce((m, o) => Math.max(m, Number(String(o.id).replace(/\D/g, '')) || 1000), 1000)) + 1;
     const order = {
       id: 'AP-' + seq,
@@ -372,7 +445,7 @@ async function api(req, res, pathname) {
     const tg = await sendTelegram(orderMessage(order), s);
     order.telegramSent = tg.ok;
     orders.push(order);
-    store.write('orders', orders);
+    await store.write('orders', orders);
     return send(res, 201, { ok: true, id: order.id, total: order.total, telegramSent: tg.ok, message: tg.ok ? null : orderMessage(order).replace(/<[^>]+>/g, '') });
   }
 
@@ -380,28 +453,28 @@ async function api(req, res, pathname) {
   if (method === 'POST' && pathname === '/api/admin/login') {
     if (limited('login:' + ip, 6, 15 * 60 * 1000)) return send(res, 429, { error: 'too_many' });
     const b = await readBody(req, 4096);
-    const admin = ensureAdmin();
+    const admin = await ensureAdmin();
     if (!admin) return send(res, 503, { error: 'admin_not_configured' });
     const okEmail = clean(b.email, 120).toLowerCase() === admin.email;
     const okPass = verifyPassword(String(b.password || ''), admin);
     if (!okEmail || !okPass) return send(res, 401, { error: 'invalid_credentials' });
     buckets.delete('login:' + ip);
-    return send(res, 200, { token: newSession(), expiresIn: TOKEN_TTL_MS });
+    return send(res, 200, { token: await newSession(), expiresIn: TOKEN_TTL_MS });
   }
 
   if (!pathname.startsWith('/api/admin/')) return send(res, 404, { error: 'not_found' });
-  if (!isAuthed(req)) return send(res, 401, { error: 'unauthorized' });
+  if (!(await isAuthed(req))) return send(res, 401, { error: 'unauthorized' });
 
   // ---- admin (himoyalangan)
   if (method === 'POST' && pathname === '/api/admin/logout') {
-    sessions.delete((req.headers.authorization || '').slice(7));
+    // token imzolangan va muddati bor: brauzer uni o'chiradi, server tomonda saqlanadigan ro'yxat yo'q
     return send(res, 204, '');
   }
 
-  if (method === 'GET' && pathname === '/api/admin/stats') return send(res, 200, buildStats());
+  if (method === 'GET' && pathname === '/api/admin/stats') return send(res, 200, await buildStats());
 
   if (method === 'GET' && pathname === '/api/admin/settings') {
-    const s = getSettings();
+    const s = await getSettings();
     const tg = telegramConfig(s);
     return send(res, 200, {
       ...publicSettings(s),
@@ -411,7 +484,7 @@ async function api(req, res, pathname) {
 
   if (method === 'PUT' && pathname === '/api/admin/settings') {
     const b = await readBody(req, 16 * 1024);
-    const s = getSettings();
+    const s = await getSettings();
     if (Array.isArray(b.sizes)) {
       const sizes = b.sizes.map((x) => ({ ml: Math.round(Number(x.ml)), price: Math.round(Number(x.price)) }))
         .filter((x) => x.ml > 0 && x.ml <= 500 && x.price > 0).sort((a, c) => a.ml - c.ml);
@@ -426,13 +499,13 @@ async function api(req, res, pathname) {
       if ('botToken' in b.telegram && b.telegram.botToken !== '') s.telegram.botToken = clean(b.telegram.botToken, 100);
       if ('chatId' in b.telegram) s.telegram.chatId = clean(b.telegram.chatId, 40);
     }
-    store.write('settings', s);
+    await store.write('settings', s);
     return send(res, 200, { ok: true });
   }
 
   // Bot tokeni kiritilgach: Shuhrat aka botga /start bosadi, bu yerda uning chat ID si topiladi
   if (method === 'POST' && pathname === '/api/admin/telegram/find-chats') {
-    const { botToken } = telegramConfig(getSettings());
+    const { botToken } = telegramConfig(await getSettings());
     if (!botToken) return send(res, 400, { error: 'no_token' });
     try {
       const r = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
@@ -448,18 +521,18 @@ async function api(req, res, pathname) {
   }
 
   if (method === 'POST' && pathname === '/api/admin/telegram/test') {
-    const r = await sendTelegram('✅ Able Parfum sayti Telegram botga muvaffaqiyatli ulandi. Buyurtmalar shu yerga keladi.', getSettings());
+    const r = await sendTelegram('✅ Able Parfum sayti Telegram botga muvaffaqiyatli ulandi. Buyurtmalar shu yerga keladi.', await getSettings());
     return send(res, r.ok ? 200 : 400, r);
   }
 
   if (method === 'GET' && pathname === '/api/admin/products') {
-    const s = getSettings();
-    return send(res, 200, getProducts().sort((a, b) => a.order - b.order).map((p) => ({ ...p, effectiveDiscount: effectiveDiscount(p, s) })));
+    const s = await getSettings();
+    return send(res, 200, (await getProducts()).sort((a, b) => a.order - b.order).map((p) => ({ ...p, effectiveDiscount: effectiveDiscount(p, s) })));
   }
 
   if (method === 'POST' && pathname === '/api/admin/products') {
     const b = await readBody(req);
-    const products = getProducts();
+    const products = await getProducts();
     let id = slugify(b.name);
     while (products.some((p) => p.id === id)) id += '-' + crypto.randomBytes(2).toString('hex');
     const p = sanitizeProductInput(b, {
@@ -468,44 +541,44 @@ async function api(req, res, pathname) {
       order: products.reduce((m, x) => Math.min(m, x.order), 0) - 1, // yangi mahsulot katalog boshida chiqadi
     });
     if (!p.name) return send(res, 400, { error: 'name_required' });
-    p.image = saveImage(b.imageData, id) || 'assets/logo-cream.png';
+    p.image = await saveImage(b.imageData, id) || 'assets/logo-cream.png';
     products.push(p);
-    store.write('products', products);
+    await store.write('products', products);
     return send(res, 201, p);
   }
 
   const pm = pathname.match(/^\/api\/admin\/products\/([\w-]+)$/);
   if (pm && (method === 'PUT' || method === 'DELETE')) {
-    const products = getProducts();
+    const products = await getProducts();
     const i = products.findIndex((p) => p.id === pm[1]);
     if (i < 0) return send(res, 404, { error: 'not_found' });
     if (method === 'DELETE') {
       products.splice(i, 1);
-      store.write('products', products);
+      await store.write('products', products);
       return send(res, 204, '');
     }
     const b = await readBody(req);
     const p = sanitizeProductInput(b, products[i]);
-    const img = saveImage(b.imageData, p.id);
+    const img = await saveImage(b.imageData, p.id);
     if (img) p.image = img;
     products[i] = p;
-    store.write('products', products);
+    await store.write('products', products);
     return send(res, 200, p);
   }
 
   if (method === 'GET' && pathname === '/api/admin/orders') {
-    return send(res, 200, store.read('orders', []).slice().reverse());
+    return send(res, 200, (await store.read('orders', [])).slice().reverse());
   }
 
   const om = pathname.match(/^\/api\/admin\/orders\/(AP-\d+)$/);
   if (om && method === 'PATCH') {
     const b = await readBody(req, 4096);
-    const orders = store.read('orders', []);
+    const orders = await store.read('orders', []);
     const o = orders.find((x) => x.id === om[1]);
     if (!o) return send(res, 404, { error: 'not_found' });
     if (['new', 'confirmed', 'done', 'cancelled'].includes(b.status)) o.status = b.status;
     if ('note' in b) o.note = clean(b.note, 500);
-    store.write('orders', orders);
+    await store.write('orders', orders);
     return send(res, 200, o);
   }
 
@@ -513,7 +586,8 @@ async function api(req, res, pathname) {
 }
 
 // ---------------------------------------------------------------- server
-const server = http.createServer(async (req, res) => {
+// Bitta ishlovchi: lokal http server ham, Vercel funksiyasi (api/index.js) ham shuni chaqiradi
+async function handler(req, res) {
   const { pathname } = new URL(req.url, 'http://x');
   try {
     if (pathname.startsWith('/api/')) return await api(req, res, pathname);
@@ -523,12 +597,16 @@ const server = http.createServer(async (req, res) => {
     if (!res.headersSent) send(res, e.status || 500, { error: e.status ? e.message : 'server_error' });
     if (!e.status) console.error(e);
   }
-});
+}
+const server = http.createServer(handler);
 
 if (require.main === module) {
-  getSettings(); getProducts();
-  if (!ensureAdmin()) console.warn('⚠  Admin hali sozlanmagan: `node setup-admin.js EMAIL PAROL` buyrug\'ini bajaring.');
-  server.listen(PORT, () => console.log(`Able Parfum → http://localhost:${PORT}  ·  admin → http://localhost:${PORT}/admin`));
+  (async () => {
+    await getSettings(); await getProducts();
+    if (!(await ensureAdmin())) console.warn('⚠  Admin hali sozlanmagan: `node setup-admin.js EMAIL PAROL` buyrug\'ini bajaring.');
+    console.log('Ma\'lumotlar ombori:', store.kind === 'redis' ? 'Upstash Redis' : 'server/data (lokal fayllar)');
+    server.listen(PORT, () => console.log(`Able Parfum → http://localhost:${PORT}  ·  admin → http://localhost:${PORT}/admin`));
+  })();
 }
 
-module.exports = { server, hashPassword, priceFor };
+module.exports = { server, handler, hashPassword, priceFor };
