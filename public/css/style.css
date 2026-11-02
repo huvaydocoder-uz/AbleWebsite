@@ -864,6 +864,9 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 .footer-links { margin-top: 16px; display: grid; gap: 10px; font-size: 14px; color: rgba(248, 240, 227, .7); }
 .footer-links a:hover { color: var(--cream-50); }
 .footer-links-2 { grid-template-columns: repeat(2, max-content); column-gap: 32px; }
+/* Manzil bitta qatorda; katta ekranda "Aloqa" ustuni manzilga moslashadi, qolganlari teng */
+#footerAddr { white-space: nowrap; }
+@media (min-width: 1024px) { .footer-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content minmax(0, 1fr); } }
 .footer-social { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(230, 200, 145, .3); color: var(--gold-300); transition: background .4s, color .4s, transform .4s var(--ease); }
 .footer-social svg { width: 20px; height: 20px; }
 .footer-social:hover { background: var(--gold-300); color: var(--wine-900); transform: translateY(-3px); }
