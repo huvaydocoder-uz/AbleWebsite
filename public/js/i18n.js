@@ -141,13 +141,13 @@ window.I18N = {
     'modal.done': 'Yaxshi',
 
     'cart.title': 'Savat',
-    'cart.empty': 'Savat bo'sh. Katalogdan atir tanlang.',
-    'cart.add': 'Savatga qo'shish',
-    'cart.added': 'Savatga qo'shildi',
+    'cart.empty': "Savat bo'sh. Katalogdan atir tanlang.",
+    'cart.add': "Savatga qo'shish",
+    'cart.added': "Savatga qo'shildi",
     'cart.checkout': 'Buyurtma berish',
     'cart.clear': 'Savatni tozalash',
     'cart.total': 'Jami',
-    'cart.remove': 'O'chirish',
+    'cart.remove': "O'chirish",
 
     'founder.eyebrow': 'Asoschi',
     'founder.title': 'Shuhrat Gafurov',
