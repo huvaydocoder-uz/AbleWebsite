@@ -1052,3 +1052,31 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 @keyframes phoneShake { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-16deg); } 40% { transform: rotate(14deg); } 60% { transform: rotate(-9deg); } 80% { transform: rotate(5deg); } }
 @keyframes pinDrop { 0% { transform: translateY(0); } 35% { transform: translateY(-5px); } 65% { transform: translateY(1px) scaleY(.9); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .contact-btn:hover svg { animation: none; } }
+
+/* ---- Floating cart bar ---- */
+.cart-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(120px);
+  z-index: 90; transition: transform .45s cubic-bezier(.22,1,.36,1);
+  pointer-events: none;
+}
+.cart-bar:not([hidden]) { transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.cart-bar[hidden] { display: block !important; }
+.cart-bar-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 28px; border-radius: 99px;
+  background: var(--wine-900); color: var(--cream-50);
+  font-size: 15px; font-weight: 700; letter-spacing: .02em;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+  transition: transform .2s, box-shadow .2s;
+  white-space: nowrap;
+}
+.cart-bar-btn:hover { transform: scale(1.04); box-shadow: 0 16px 50px rgba(0,0,0,.5); }
+.cart-bar-btn:active { transform: scale(.97); }
+.cart-bar-icon { width: 20px; height: 20px; flex: none; }
+.cart-bar-count {
+  min-width: 22px; height: 22px; padding: 0 6px;
+  background: var(--gold-400); color: var(--wine-900);
+  border-radius: 99px; font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.cart-bar.is-empty { transform: translateX(-50%) translateY(120px); pointer-events: none; }

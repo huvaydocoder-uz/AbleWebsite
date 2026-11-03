@@ -258,6 +258,14 @@
     const badge = $('#cartBadge');
     badge.hidden = n === 0;
     badge.textContent = n;
+    // Floating cart bar
+    const bar = $('#cartBar');
+    if (bar) {
+      bar.hidden = false;
+      $('#cartBarCount').textContent = n;
+      $('#cartBarText').textContent = n > 0 ? `Savat (${n} ta)` : 'Savat';
+      bar.classList.toggle('is-empty', n === 0);
+    }
   }
 
   function addToCart(product, ml, qty) {
@@ -817,6 +825,8 @@
 
     // Cart modal
     $('#cartBtn').addEventListener('click', openCartModal);
+    const cartBarBtn = $('#cartBarBtn');
+    if (cartBarBtn) cartBarBtn.addEventListener('click', openCartModal);
     document.addEventListener('click', (e) => {
       if (e.target.closest('[data-cart-close]')) closeCartModal();
       if (e.target.closest('[data-remove]')) {
