@@ -1098,3 +1098,16 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 /* Maslahat olish — Telegram icon yuqoriga uchadi */
 @keyframes tgFly { 0%{transform:translate(0,0) scale(1)} 40%{transform:translate(4px,-4px) scale(1.1)} 70%{transform:translate(2px,-2px) scale(.95)} 100%{transform:translate(0,0) scale(1)} }
 .hero-btn-tg:hover .hero-icon-tg { animation: tgFly .6s var(--ease) forwards; }
+
+/* ---- Modal ichidagi savat ko'rsatgich ---- */
+.modal-cart-hint {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 10px 14px; margin-bottom: 10px;
+  border-radius: 12px; border: 1.5px solid rgba(212,173,106,.5);
+  background: rgba(212,173,106,.08); color: var(--wine-800);
+  font-size: 13px; font-weight: 600; text-align: left;
+  transition: background .2s, border-color .2s;
+}
+.modal-cart-hint:hover { background: rgba(212,173,106,.18); border-color: var(--gold-400); }
+.mch-icon { width: 16px; height: 16px; flex: none; color: var(--gold-500); }
+.mch-arrow { width: 14px; height: 14px; flex: none; margin-left: auto; }

@@ -528,6 +528,13 @@
           <h4 class="modal-h" data-i18n="modal.size">Hajmni tanlang</h4>
           <div class="size-grid" id="pmSizes"></div>
 
+          <!-- Savat holati: savatda mahsulot bo'lganda ko'rinadi -->
+          <button type="button" id="modalCartHint" class="modal-cart-hint hidden" onclick="document.getElementById('productModal').querySelector('[data-close]').click();document.getElementById('cartBtn').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="mch-icon"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            <span id="modalCartHintText">Savatda 0 ta mahsulot</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mch-arrow"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+
           <!-- Buyurtma paneli: oyna pastiga qotirilgan — scroll qilmasdan buyurtma berish mumkin -->
           <div class="buy-bar">
             <div class="qty">

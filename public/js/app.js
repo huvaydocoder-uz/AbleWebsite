@@ -266,6 +266,12 @@
       $('#cartBarText').textContent = n > 0 ? `Savat (${n} ta)` : 'Savat';
       bar.classList.toggle('is-empty', n === 0);
     }
+    // Modal ichidagi savat ko'rsatgich
+    const hint = $('#modalCartHint');
+    if (hint) {
+      hint.classList.toggle('hidden', n === 0);
+      if (n > 0) $('#modalCartHintText').textContent = `Savatda ${n} ta mahsulot → ko'rish`;
+    }
   }
 
   function addToCart(product, ml, qty) {
