@@ -1080,3 +1080,20 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
   display: flex; align-items: center; justify-content: center;
 }
 .cart-bar.is-empty { transform: translateX(-50%) translateY(120px); pointer-events: none; }
+
+/* ---- Light mode: cart button visibility ---- */
+[data-theme='light'] .cart-btn { color: var(--wine-900); }
+[data-theme='light'] .cart-btn:hover { background: rgba(58,10,20,.08); }
+
+/* ---- Hero buttons: icon animatsiyalari ---- */
+.hero-btn-catalog, .hero-btn-tg { display: inline-flex; align-items: center; gap: 8px; }
+.hero-btn-icon { width: 18px; height: 18px; flex: none; transition: transform .4s var(--ease); }
+.hero-btn-arrow { width: 16px; height: 16px; flex: none; transition: transform .35s var(--ease); }
+
+/* Atir tanlash — spray icon aylanadi, o'q o'ngga siljiydai */
+.hero-btn-catalog:hover .hero-icon-spray { transform: rotate(20deg) scale(1.15); }
+.hero-btn-catalog:hover .hero-btn-arrow { transform: translateX(5px); }
+
+/* Maslahat olish — Telegram icon yuqoriga uchadi */
+@keyframes tgFly { 0%{transform:translate(0,0) scale(1)} 40%{transform:translate(4px,-4px) scale(1.1)} 70%{transform:translate(2px,-2px) scale(.95)} 100%{transform:translate(0,0) scale(1)} }
+.hero-btn-tg:hover .hero-icon-tg { animation: tgFly .6s var(--ease) forwards; }
