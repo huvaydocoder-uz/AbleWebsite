@@ -891,6 +891,18 @@
         $('#stage3d').style.transform = `rotateY(${x * 16}deg) rotateX(${-y * 10}deg)`;
       });
     }
+
+    // 3D ko'tarish effekti: bosib ushlaganda flakon ko'tariladi
+    $$('.float-bottle').forEach((b) => {
+      const lift = () => b.classList.add('lifted');
+      const drop = () => b.classList.remove('lifted');
+      b.addEventListener('mousedown', lift);
+      b.addEventListener('mouseup', drop);
+      b.addEventListener('mouseleave', drop);
+      b.addEventListener('touchstart', lift, { passive: true });
+      b.addEventListener('touchend', drop);
+      b.addEventListener('touchcancel', drop);
+    });
   }
   // ------------------------------------------------------------ gallery lightbox
   // Chapga/o'ngga: o'q tugmalari, klaviatura (← →), barmoq bilan surish, rasmning chap/o'ng yarmini bosish.

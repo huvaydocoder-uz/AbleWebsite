@@ -334,10 +334,13 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
   mask-image: linear-gradient(180deg, #000, transparent 75%); -webkit-mask-image: linear-gradient(180deg, #000, transparent 75%);
 }
 .stage3d { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .6s var(--ease); }
-.float-bottle { position: absolute; object-fit: contain; filter: drop-shadow(0 30px 28px rgba(58, 10, 20, .35)); will-change: transform; }
+.float-bottle { position: absolute; object-fit: contain; filter: drop-shadow(0 30px 28px rgba(58, 10, 20, .35)); will-change: transform; cursor: pointer; transition: translate .15s cubic-bezier(.2,0,.1,1), scale .15s cubic-bezier(.2,0,.1,1), filter .2s ease; }
 .fb-1 { width: 30%; left: 9%; bottom: 17%; transform: translateZ(40px) rotate(-6deg); animation: floatA 7s ease-in-out infinite; }
 .fb-2 { width: 36%; left: 32%; bottom: 22%; transform: translateZ(90px); animation: floatB 6s ease-in-out infinite; z-index: 2; }
 .fb-3 { width: 28%; right: 8%; bottom: 16%; transform: translateZ(30px) rotate(7deg); animation: floatA 8s -2s ease-in-out infinite; }
+.fb-4 { width: 26%; left: 0%; bottom: 10%; transform: translateZ(6px) rotate(-16deg); animation: floatA 9s -3s ease-in-out infinite; opacity: .88; }
+.fb-5 { width: 23%; right: 0%; bottom: 9%; transform: translateZ(6px) rotate(18deg); animation: floatA 10s -5.5s ease-in-out infinite; opacity: .88; }
+.float-bottle.lifted { translate: 0 -32px !important; scale: 1.13 !important; animation-play-state: paused !important; filter: drop-shadow(0 52px 42px rgba(58,10,20,.6)) !important; z-index: 10 !important; }
 @keyframes floatA { 50% { translate: 0 -14px; } }
 @keyframes floatB { 50% { translate: 0 -22px; } }
 .pedestal { position: absolute; left: 10%; right: 10%; bottom: 9%; height: 9%; border-radius: 50%; background: radial-gradient(ellipse, rgba(58, 10, 20, .35), transparent 70%); filter: blur(6px); }
