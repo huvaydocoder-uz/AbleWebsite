@@ -104,6 +104,10 @@
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>
           <span class="call-label" data-i18n="header.call">Telefon qilish</span>
         </a>
+        <button type="button" id="cartBtn" class="cart-btn" aria-label="Savat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <span class="cart-badge" id="cartBadge" hidden>0</span>
+        </button>
         <button type="button" id="menuBtn" class="menu-btn lg:hidden" aria-expanded="false" aria-controls="mobileNav">
           <span></span><span></span><span class="sr-only" data-i18n="nav.menu">Menyu</span>
         </button>
@@ -529,7 +533,9 @@
               <p class="text-xs uppercase tracking-[0.18em] text-wine-800/60" data-i18n="modal.total">Jami</p>
               <p class="font-display text-wine-900"><s class="text-wine-800/40" id="pmOld"></s><span id="pmTotal"></span></p>
             </div>
-            <button type="button" class="btn-dark buy-btn justify-center" id="toCheckout" data-i18n="modal.order">Buyurtma berish</button>
+            <div class="buy-btn-group">
+              <button type="button" class="btn-dark buy-btn justify-center" id="addToCartBtn" data-i18n="cart.add">Savatga qo'shish</button>
+              <button type="button" class="btn-outline-dark buy-btn-direct justify-center" id="toCheckout" data-i18n="modal.order">Buyurtma berish</button>
           </div>
         </div>
 
@@ -564,6 +570,41 @@
     </div>
   </div>
 
+  <!-- ============================================================ SAVAT MODALI -->
+  <div class="modal" id="cartModal" role="dialog" aria-modal="true" aria-label="Savat" hidden>
+    <div class="modal-backdrop" data-cart-close></div>
+    <div class="modal-panel">
+      <button type="button" class="modal-close" data-cart-close aria-label="Yopish">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="modal-media cart-hero-side" aria-hidden="true">
+        <div class="cart-hero-inner">
+          <svg viewBox="0 0 80 80" fill="none" class="cart-hero-icon">
+            <circle cx="40" cy="40" r="38" stroke="currentColor" stroke-width="1.5" opacity=".18"/>
+            <path d="M24 24l-4 4v24a4 4 0 004 4h32a4 4 0 004-4V28l-4-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M52 36a12 12 0 01-24 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="20" y1="28" x2="60" y2="28" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="modal-body" id="cartBody">
+        <div class="modal-step is-active" data-step="cart">
+          <h3 class="font-display text-3xl text-wine-900 mb-5" data-i18n="cart.title">Savat</h3>
+          <div id="cartItems"></div>
+          <p id="cartEmpty" class="text-center py-12 text-wine-800/60" data-i18n="cart.empty">Savat bo'sh</p>
+          <div id="cartFooter" class="hidden">
+            <div class="flex justify-between items-center py-4 border-t border-wine-800/10 mt-2">
+              <span class="font-semibold text-wine-900" data-i18n="cart.total">Jami</span>
+              <span class="font-display text-2xl text-wine-900" id="cartTotal"></span>
+            </div>
+            <button type="button" class="btn-dark w-full justify-center text-base" id="cartCheckout" data-i18n="cart.checkout">Buyurtma berish</button>
+            <button type="button" class="btn-outline-dark mx-auto mt-3 text-sm" id="cartClear" data-i18n="cart.clear">Savatni tozalash</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Galereya lightbox -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Galereya" hidden>
     <button type="button" class="lightbox-close" id="lbClose" aria-label="Yopish">×</button>
@@ -579,6 +620,7 @@
     <button type="button" class="lb-arrow lb-next" id="lbNext" aria-label="Keyingi rasm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
 
+  <div id="cartToast" role="status" aria-live="polite"></div>
   <script src="js/i18n.js"></script>
   <script src="js/app.js"></script>
 </body>

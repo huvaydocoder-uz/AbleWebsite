@@ -91,7 +91,7 @@
         <button class="tab-btn" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l2 5H4zM4 8h16v13H4zM9 12h6"/></svg><span>Buyurtmalar</span><b id="newBadge" class="hidden ml-auto text-[11px] px-2 py-0.5 rounded-full bg-gold-400 text-wine-900"></b></button>
         <button class="tab-btn" data-tab="customers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.6-5 6.5-5s5.5 1.5 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c2 .6 3.2 2.2 3.8 5"/></svg><span>Mijozlar</span></button>
         <button class="tab-btn" data-tab="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6v3H9zM10 6h4v2h-4zM6 8h12v13H6z"/></svg><span>Mahsulotlar</span></button>
-        <button class="tab-btn" data-tab="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9h9v9l-9 9zM16 8h.01"/></svg><span>Narx va chegirma</span></button>
+        <button class="tab-btn" data-tab="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12l9-9h9v9l-9 9zM16 8h.01"/></svg><span>Katta chegirma</span></button>
         <button class="tab-btn" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Sozlamalar</span></button>
       </nav>
       <button id="logoutBtn" class="tab-btn lg:mt-auto shrink-0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Chiqish</span></button>
@@ -175,16 +175,11 @@
         </div>
       </section>
 
-      <!-- ---------------- NARX VA CHEGIRMA -->
+      <!-- ---------------- KATTA CHEGIRMA -->
       <section data-view="prices" class="hidden max-w-4xl">
-        <h1 class="font-display text-5xl">Narx va chegirma</h1>
-        <p class="text-wine-800/80 mt-1">Narxni o'zgartirsangiz, saytdagi barcha atirlar narxi avtomatik yangilanadi.</p>
+        <h1 class="font-display text-5xl">Katta chegirma</h1>
+        <p class="text-wine-800/80 mt-1">Butun saytga yoki alohida mahsulotlarga chegirma belgilang. Mahsulot narxlari esa mahsulotlar bo'limida sozlanadi.</p>
         <div class="card p-6 mt-8">
-          <h2 class="font-semibold">Hajmlar va standart narxlar</h2>
-          <div class="mt-5 space-y-3" id="sizesEditor"></div>
-          <button class="btn btn-line mt-4" id="addSize">+ Hajm qo'shish</button>
-        </div>
-        <div class="card p-6 mt-4">
           <h2 class="font-semibold">Umumiy chegirma (butun sayt uchun)</h2>
           <p class="text-sm text-wine-800/80 mt-1">Masalan, bayram aksiyasi. Agar mahsulotning o'z chegirmasi kattaroq bo'lsa, o'shanisi qo'llanadi. 0 — chegirma yo'q.</p>
           <div class="grid sm:grid-cols-[160px_1fr] gap-4 mt-5">
@@ -285,6 +280,10 @@
           <label><span class="lbl">Yurak notasi</span><input class="inp" name="heart" maxlength="60" /></label>
           <label><span class="lbl">Baza notasi</span><input class="inp" name="base" maxlength="60" /></label>
           <label><span class="lbl">Chegirma, %</span><input class="inp" name="discount" type="number" min="0" max="90" value="0" /></label>
+          <div class="col-span-2">
+            <span class="lbl">Hajmlar bo'yicha narxlar (so'm)</span>
+            <div id="pfPrices" class="grid grid-cols-4 gap-2 mt-1"></div>
+          </div>
         </div>
       </div>
       <details class="mt-5">

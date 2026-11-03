@@ -204,13 +204,14 @@
     $('#prodCount').textContent = data.products.length;
     $('#productsBody').innerHTML = list.map((p) => {
       const d = p.effectiveDiscount;
-      const price = Math.round((base.price * (100 - d)) / 100 / 1000) * 1000;
+      const basePrice = (p.prices && p.prices[base.ml]) || base.price;
+      const price = Math.round((basePrice * (100 - d)) / 100 / 1000) * 1000;
       return `<tr data-id="${p.id}" class="${p.active ? '' : 'opacity-50'}">
         <td><img class="p-thumb" src="${esc(p.image)}" alt="" loading="lazy" /></td>
         <td><b>${esc(p.name)}</b><br /><small class="text-wine-800/80">${esc(p.brand || '—')}</small></td>
         <td>${GENDER[p.gender]}</td>
         <td><input class="inp !w-20 !py-1.5" type="number" min="0" max="90" value="${p.discount || 0}" data-discount /></td>
-        <td class="whitespace-nowrap">${d ? `<s class="text-wine-800/80 text-xs">${money(base.price)}</s><br />` : ''}<b>${money(price)}</b></td>
+        <td class="whitespace-nowrap">${d ? `<s class="text-wine-800/80 text-xs">${money(basePrice)}</s><br />` : ''}<b>${money(price)}</b></td>
         <td><label class="switch"><input type="checkbox" data-best ${p.bestseller ? 'checked' : ''} /><span></span></label></td>
         <td><label class="switch"><input type="checkbox" data-active ${p.active ? 'checked' : ''} /><span></span></label></td>
         <td class="text-right"><button class="btn btn-line !py-1.5 !px-4" data-edit>Tahrirlash</button></td>
@@ -248,12 +249,15 @@
     pf.reset();
     $('#prodDialogTitle').textContent = p ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot';
     $('#pfDelete').classList.toggle('invisible', !p);
-    const v = p || { name: '', brand: '', gender: 'men', family: 'fresh', intensity: 3, discount: 0, notes: { top: '', heart: '', base: '' }, bestseller: false, active: true };
+    const v = p || { name: '', brand: '', gender: 'men', family: 'fresh', intensity: 3, discount: 0, notes: { top: '', heart: '', base: '' }, bestseller: false, active: true, prices: null };
     pf.name.value = v.name; pf.brand.value = v.brand || ''; pf.gender.value = v.gender; pf.family.value = v.family;
     pf.intensity.value = v.intensity; pf.discount.value = v.discount || 0;
     pf.top.value = v.notes.top; pf.heart.value = v.notes.heart; pf.base.value = v.notes.base;
     pf.bestseller.checked = !!v.bestseller; pf.active.checked = v.active !== false;
     pf.descUz.value = v.description?.uz || ''; pf.descRu.value = v.description?.ru || ''; pf.descEn.value = v.description?.en || '';
+    $('#pfPrices').innerHTML = data.settings.sizes.map((s) => `
+      <label><span class="lbl">${s.ml} ml</span><input class="inp" name="price_${s.ml}" type="number" min="1000" step="1000" value="${(v.prices && v.prices[s.ml]) || s.price}" /></label>
+    `).join('');
     $('#pfPreview').classList.toggle('hidden', !p);
     $('#pfPlaceholder').classList.toggle('hidden', !!p);
     $('#pfPreview').src = p ? p.image : 'assets/logo-dark.png';
@@ -281,12 +285,18 @@
   });
   pf.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const prices = {};
+    data.settings.sizes.forEach((s) => {
+      const el = pf.elements[`price_${s.ml}`];
+      if (el && el.value) prices[s.ml] = Number(el.value);
+    });
     const body = {
       name: pf.name.value, brand: pf.brand.value, gender: pf.gender.value, family: pf.family.value,
       intensity: pf.intensity.value, discount: pf.discount.value,
       notes: { top: pf.top.value, heart: pf.heart.value, base: pf.base.value },
       bestseller: pf.bestseller.checked, active: pf.active.checked,
       description: { uz: pf.descUz.value, ru: pf.descRu.value, en: pf.descEn.value },
+      prices,
     };
     if (imageData) body.imageData = imageData;
     try {
@@ -308,51 +318,30 @@
     } catch { toast("Xatolik: o'chirilmadi"); }
   });
 
-  // ------------------------------------------------------------ prices
-  let sizesDraft = [];
+  // ------------------------------------------------------------ prices (Katta chegirma)
   function renderPrices() {
     const s = data.settings;
-    sizesDraft = s.sizes.map((x) => ({ ...x }));
     $('#globalDiscount').value = s.globalDiscount;
     $('#dlUz').value = s.discountLabel?.uz || ''; $('#dlRu').value = s.discountLabel?.ru || ''; $('#dlEn').value = s.discountLabel?.en || '';
-    renderSizes();
-  }
-  function renderSizes() {
-    $('#sizesEditor').innerHTML = sizesDraft.map((s, i) => `
-      <div class="grid grid-cols-[110px_1fr_auto] gap-3 items-end" data-i="${i}">
-        <label><span class="lbl">Hajm, ml</span><input class="inp" type="number" min="1" value="${s.ml}" data-k="ml" /></label>
-        <label><span class="lbl">Narx, so'm</span><input class="inp" type="number" min="1000" step="1000" value="${s.price}" data-k="price" /></label>
-        <button class="btn btn-danger !px-3" data-remove title="O'chirish">✕</button>
-      </div>`).join('');
     renderPreview();
   }
   function renderPreview() {
     const d = Math.min(90, Math.max(0, Number($('#globalDiscount').value) || 0));
-    $('#pricePreview').innerHTML = sizesDraft.filter((s) => s.ml && s.price).sort((a, b) => a.ml - b.ml).map((s) => {
+    const sizes = data.settings.sizes;
+    $('#pricePreview').innerHTML = sizes.map((s) => {
       const f = Math.round((s.price * (100 - d)) / 100 / 1000) * 1000;
       return `<div class="rounded-2xl bg-wine-800 text-cream-100 px-5 py-4"><b class="font-display text-3xl text-gold-300">${s.ml} ml</b>${d ? `<s class="block text-xs opacity-60">${money(s.price)}</s>` : ''}<div class="font-semibold">${money(f)} so'm</div></div>`;
     }).join('');
   }
-  $('#sizesEditor').addEventListener('input', (e) => {
-    const row = e.target.closest('[data-i]'); if (!row) return;
-    sizesDraft[row.dataset.i][e.target.dataset.k] = Number(e.target.value);
-    renderPreview();
-  });
-  $('#sizesEditor').addEventListener('click', (e) => {
-    if (!e.target.closest('[data-remove]')) return;
-    if (sizesDraft.length <= 1) { toast("Kamida bitta hajm bo'lishi kerak"); return; }
-    sizesDraft.splice(e.target.closest('[data-i]').dataset.i, 1); renderSizes();
-  });
-  $('#addSize').addEventListener('click', () => { sizesDraft.push({ ml: 100, price: 1200000 }); renderSizes(); });
   $('#globalDiscount').addEventListener('input', renderPreview);
   $('#savePrices').addEventListener('click', async () => {
     try {
       await api('admin/settings', { method: 'PUT', body: {
-        sizes: sizesDraft, globalDiscount: $('#globalDiscount').value,
+        globalDiscount: $('#globalDiscount').value,
         discountLabel: { uz: $('#dlUz').value, ru: $('#dlRu').value, en: $('#dlEn').value },
       } });
       await loadAll();
-      toast('Narxlar saqlandi — saytda yangilandi');
+      toast('Chegirma saqlandi — saytda yangilandi');
     } catch { toast('Xatolik: saqlanmadi'); }
   });
 

@@ -242,9 +242,75 @@
   const discountOf = (p) => Math.max(Number(p.discount) || 0, Number(state.settings.globalDiscount) || 0);
   const finalPrice = (p, ml) => {
     const s = state.settings.sizes.find((x) => x.ml === ml) || state.settings.sizes[0];
+    const basePrice = (p.prices && p.prices[ml]) || s.price;
     const d = discountOf(p);
-    return { base: s.price, final: Math.round((s.price * (100 - d)) / 100 / 1000) * 1000, discount: d };
+    return { base: basePrice, final: Math.round((basePrice * (100 - d)) / 100 / 1000) * 1000, discount: d };
   };
+
+  // ------------------------------------------------------------ savat (cart)
+  const cart = [];
+
+  function cartCount() { return cart.reduce((n, x) => n + x.qty, 0); }
+  function cartTotal() { return cart.reduce((n, x) => n + finalPrice(x.product, x.ml).final * x.qty, 0); }
+
+  function updateCartBadge() {
+    const n = cartCount();
+    const badge = $('#cartBadge');
+    badge.hidden = n === 0;
+    badge.textContent = n;
+  }
+
+  function addToCart(product, ml, qty) {
+    const ex = cart.find((x) => x.product.id === product.id && x.ml === ml);
+    if (ex) ex.qty = Math.min(20, ex.qty + qty);
+    else cart.push({ product, ml, qty });
+    updateCartBadge();
+    showCartToast(product);
+  }
+
+  function showCartToast(product) {
+    const el = $('#cartToast');
+    if (!el) return;
+    el.textContent = `✓ ${product.name} — ${t('cart.added')}`;
+    el.classList.add('show');
+    clearTimeout(showCartToast._t);
+    showCartToast._t = setTimeout(() => el.classList.remove('show'), 2200);
+  }
+
+  function renderCartItems() {
+    const empty = $('#cartEmpty'), footer = $('#cartFooter'), items = $('#cartItems');
+    if (!empty || !footer || !items) return;
+    if (!cart.length) {
+      items.innerHTML = ''; empty.hidden = false; footer.classList.add('hidden'); return;
+    }
+    empty.hidden = true; footer.classList.remove('hidden');
+    items.innerHTML = cart.map(({ product, ml, qty }, idx) => {
+      const pr = finalPrice(product, ml);
+      return `<div class="cart-item">
+        <img src="${escapeHtml(product.image)}" alt="" class="cart-item-img" />
+        <div class="cart-item-info">
+          <p class="cart-item-name">${escapeHtml(product.name)}</p>
+          <p class="cart-item-meta">${ml} ${t('ml')} × ${qty} = ${priceText(pr.final * qty)}</p>
+        </div>
+        <button type="button" class="cart-item-remove" data-remove="${idx}" aria-label="${t('cart.remove')}">×</button>
+      </div>`;
+    }).join('');
+    $('#cartTotal').textContent = priceText(cartTotal());
+  }
+
+  function openCartModal() {
+    renderCartItems();
+    const cm = $('#cartModal');
+    cm.hidden = false; cm.classList.remove('is-closing');
+    document.body.classList.add('no-scroll');
+  }
+
+  function closeCartModal() {
+    const cm = $('#cartModal');
+    if (cm.hidden) return;
+    cm.classList.add('is-closing');
+    setTimeout(() => { cm.hidden = true; cm.classList.remove('is-closing'); document.body.classList.remove('no-scroll'); }, 330);
+  }
   const genderLabel = (g) => t('g.' + g);
 
   // ------------------------------------------------------------ renderers
@@ -524,15 +590,22 @@
     $$('.modal-step', modal).forEach((s) => s.classList.toggle('is-active', s.dataset.step === name));
     $('.modal-body', modal).scrollTop = 0;
     if (name === 'form') {
-      const p = state.current, pr = finalPrice(p, state.size);
-      $('#orderSummary').innerHTML = `<img src="${p.image}" alt="" /><div><b>${escapeHtml(p.name)}</b><span>${state.size} ${t('ml')} × ${state.qty}</span></div><strong>${priceText(pr.final * state.qty)}</strong>`;
+      if (cartCheckoutItems) {
+        $('#orderSummary').innerHTML = cartCheckoutItems.map(({ product, ml, qty }) => {
+          const pr = finalPrice(product, ml);
+          return `<div class="summary-row"><img src="${escapeHtml(product.image)}" alt="" /><div><b>${escapeHtml(product.name)}</b><span>${ml} ${t('ml')} × ${qty}</span></div><strong>${priceText(pr.final * qty)}</strong></div>`;
+        }).join('');
+      } else {
+        const p = state.current, pr = finalPrice(p, state.size);
+        $('#orderSummary').innerHTML = `<img src="${escapeHtml(p.image)}" alt="" /><div><b>${escapeHtml(p.name)}</b><span>${state.size} ${t('ml')} × ${state.qty}</span></div><strong>${priceText(pr.final * state.qty)}</strong>`;
+      }
       $('#formError').classList.add('hidden');
       setTimeout(() => $('#orderForm [name=name]').focus({ preventScroll: true }), 300);
     }
   }
 
-  function buildOrderText(o) {
-    const p = state.current, pr = finalPrice(p, state.size);
+  function buildOrderText(o, items) {
+    const total = items.reduce((s, x) => s + finalPrice(x.product, x.ml).final * x.qty, 0);
     return [
       '🛍 Yangi buyurtma (Able Parfum sayti)',
       '',
@@ -541,16 +614,18 @@
       `🚚 ${o.delivery === 'delivery' ? 'Yetkazib berish' : "Do'kondan olib ketish"}`,
       o.address ? `📍 Manzil: ${o.address}` : '',
       '',
-      `• ${p.name}${p.brand ? ' (' + p.brand + ')' : ''} — ${state.size} ml × ${state.qty}`,
-      `💰 Jami: ${money(pr.final * state.qty)} so'm`,
+      ...items.map((x) => `• ${x.product.name}${x.product.brand ? ' (' + x.product.brand + ')' : ''} — ${x.ml} ml × ${x.qty}`),
+      `💰 Jami: ${money(total)} so'm`,
       o.comment ? `💬 ${o.comment}` : '',
     ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
   }
 
+  let cartCheckoutItems = null; // null = single product mode, array = cart mode
+
   async function submitOrder(e) {
     e.preventDefault();
     const f = e.target;
-    const data = {
+    const od = {
       name: f.name.value.trim(),
       phone: f.phone.value.trim(),
       delivery: f.delivery.value,
@@ -558,22 +633,29 @@
       comment: f.comment.value.trim(),
     };
     const err = $('#formError');
-    const phoneDigits = data.phone.replace(/\D/g, '');
-    f.name.closest('.field').classList.toggle('has-error', data.name.length < 2);
+    const phoneDigits = od.phone.replace(/\D/g, '');
+    f.name.closest('.field').classList.toggle('has-error', od.name.length < 2);
     f.phone.closest('.field').classList.toggle('has-error', phoneDigits.length < 9);
-    if (data.name.length < 2 || phoneDigits.length < 9) {
+    if (od.name.length < 2 || phoneDigits.length < 9) {
       err.textContent = t('modal.invalid'); err.classList.remove('hidden'); return;
     }
     err.classList.add('hidden');
     const btn = $('#submitOrder');
     btn.disabled = true; btn.textContent = t('modal.sending');
 
+    const orderItems = cartCheckoutItems
+      ? cartCheckoutItems.map((x) => ({ productId: x.product.id, ml: x.ml, qty: x.qty }))
+      : [{ productId: state.current.id, ml: state.size, qty: state.qty }];
+    const localItems = cartCheckoutItems
+      ? cartCheckoutItems.slice()
+      : [{ product: state.current, ml: state.size, qty: state.qty }];
+
     let result = null;
     if (state.online) {
       try {
         const r = await fetch('api/orders', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...data, lang: state.lang, items: [{ productId: state.current.id, ml: state.size, qty: state.qty }] }),
+          body: JSON.stringify({ ...od, lang: state.lang, items: orderItems }),
         });
         result = await r.json();
         if (!r.ok) throw new Error(result.error || r.status);
@@ -593,13 +675,16 @@
       $('#doneText').textContent = t('modal.okText', { id: result.id });
       tgBtn.classList.add('hidden');
     } else {
-      // Bot hali ulanmagan yoki server ishlamayapti: xabarni nusxalab, Telegram chatini ochamiz
-      const text = (result && result.message) || buildOrderText(data);
+      const text = (result && result.message) || buildOrderText(od, localItems);
       $('#doneTitle').textContent = t('modal.fallbackTitle');
       $('#doneText').textContent = (result ? t('modal.okText', { id: result.id }) + ' ' : '') + t('modal.fallbackText');
-      tgBtn.href = `https://t.me/${TG_USERNAME}`;
+      tgBtn.href = `https://t.me/${TG_USERNAME}?text=${encodeURIComponent(text)}`;
       tgBtn.classList.remove('hidden');
-      tgBtn.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(text).catch(() => {}); };
+      tgBtn.onclick = null;
+    }
+
+    if (cartCheckoutItems) {
+      cart.splice(0); updateCartBadge(); cartCheckoutItems = null;
     }
     f.reset();
     f.phone.value = '+998 ';
@@ -715,8 +800,39 @@
     });
     $('#qtyMinus').addEventListener('click', () => { state.qty = Math.max(1, state.qty - 1); updateTotal(); });
     $('#qtyPlus').addEventListener('click', () => { state.qty = Math.min(20, state.qty + 1); updateTotal(); });
-    $('#toCheckout').addEventListener('click', () => showStep('form'));
+
+    // "Savatga qo'shish"
+    $('#addToCartBtn').addEventListener('click', () => {
+      addToCart(state.current, state.size, state.qty);
+      closeModal();
+    });
+
+    // To'g'ridan buyurtma (bitta mahsulot)
+    $('#toCheckout').addEventListener('click', () => {
+      cartCheckoutItems = null;
+      showStep('form');
+    });
+
     $('#orderForm').addEventListener('submit', submitOrder);
+
+    // Cart modal
+    $('#cartBtn').addEventListener('click', openCartModal);
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('[data-cart-close]')) closeCartModal();
+      if (e.target.closest('[data-remove]')) {
+        const idx = Number(e.target.closest('[data-remove]').dataset.remove);
+        cart.splice(idx, 1); updateCartBadge(); renderCartItems();
+      }
+    });
+    $('#cartCheckout').addEventListener('click', () => {
+      cartCheckoutItems = cart.slice();
+      closeCartModal();
+      modal.hidden = false; modal.classList.remove('is-closing');
+      document.body.classList.add('no-scroll');
+      showStep('form');
+      setTimeout(() => $('#orderForm [name=name]').focus({ preventScroll: true }), 300);
+    });
+    $('#cartClear').addEventListener('click', () => { cart.splice(0); updateCartBadge(); renderCartItems(); });
     $$('#orderForm [name=delivery]').forEach((r) => r.addEventListener('change', () => {
       $('#addrField').classList.toggle('hidden', $('#orderForm').delivery.value !== 'delivery');
     }));
@@ -731,7 +847,7 @@
     tilt($('.modal-media'), $('#pmTilt'), 18);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { closeModal(); closeLightbox(); }
+      if (e.key === 'Escape') { closeModal(); closeLightbox(); closeCartModal(); }
       if (!$('#lightbox').hidden) {
         if (e.key === 'ArrowLeft') { e.preventDefault(); stepLightbox(-1); }
         if (e.key === 'ArrowRight') { e.preventDefault(); stepLightbox(1); }

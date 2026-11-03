@@ -140,6 +140,15 @@ window.I18N = {
     'modal.invalid': 'Iltimos, ism va telefon raqamini to‘g‘ri kiriting.',
     'modal.done': 'Yaxshi',
 
+    'cart.title': 'Savat',
+    'cart.empty': 'Savat bo'sh. Katalogdan atir tanlang.',
+    'cart.add': 'Savatga qo'shish',
+    'cart.added': 'Savatga qo'shildi',
+    'cart.checkout': 'Buyurtma berish',
+    'cart.clear': 'Savatni tozalash',
+    'cart.total': 'Jami',
+    'cart.remove': 'O'chirish',
+
     'founder.eyebrow': 'Asoschi',
     'founder.title': 'Shuhrat Gafurov',
     'founder.role': 'Able Parfum asoschisi · Buxorodagi top-blogerlardan biri',
@@ -367,6 +376,15 @@ window.I18N = {
     'modal.invalid': 'Пожалуйста, укажите имя и корректный номер телефона.',
     'modal.done': 'Хорошо',
 
+    'cart.title': 'Корзина',
+    'cart.empty': 'Корзина пуста. Выберите аромат из каталога.',
+    'cart.add': 'В корзину',
+    'cart.added': 'Добавлено в корзину',
+    'cart.checkout': 'Оформить заказ',
+    'cart.clear': 'Очистить корзину',
+    'cart.total': 'Итого',
+    'cart.remove': 'Удалить',
+
     'founder.eyebrow': 'Основатель',
     'founder.title': 'Шухрат Гафуров',
     'founder.role': 'Основатель Able Parfum · один из топ-блогеров Бухары',
@@ -593,6 +611,15 @@ window.I18N = {
     'modal.error': 'Something went wrong. Please try again or give us a call.',
     'modal.invalid': 'Please enter your name and a valid phone number.',
     'modal.done': 'Great',
+
+    'cart.title': 'Cart',
+    'cart.empty': 'Your cart is empty. Browse the catalogue to pick a scent.',
+    'cart.add': 'Add to cart',
+    'cart.added': 'Added to cart',
+    'cart.checkout': 'Place order',
+    'cart.clear': 'Clear cart',
+    'cart.total': 'Total',
+    'cart.remove': 'Remove',
 
     'founder.eyebrow': 'Founder',
     'founder.title': 'Shuhrat Gafurov',

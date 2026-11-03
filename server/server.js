@@ -136,10 +136,12 @@ function effectiveDiscount(product, settings) {
   return Math.max(Number(product.discount) || 0, Number(settings.globalDiscount) || 0);
 }
 function priceFor(product, ml, settings) {
-  const size = settings.sizes.find((s) => s.ml === Number(ml));
-  if (!size) return null;
+  const mlNum = Number(ml);
+  const size = settings.sizes.find((s) => s.ml === mlNum);
+  const basePrice = (product.prices && product.prices[mlNum]) || (size ? size.price : null);
+  if (!basePrice) return null;
   const d = effectiveDiscount(product, settings);
-  return { base: size.price, final: Math.round((size.price * (100 - d)) / 100 / 1000) * 1000, discount: d };
+  return { base: basePrice, final: Math.round((basePrice * (100 - d)) / 100 / 1000) * 1000, discount: d };
 }
 
 // ---------------------------------------------------------------- auth
@@ -386,6 +388,14 @@ function sanitizeProductInput(b, existing = {}) {
   if ('description' in b) {
     const d = b.description || {};
     out.description = d.uz || d.ru || d.en ? { uz: clean(d.uz, 1500), ru: clean(d.ru, 1500), en: clean(d.en, 1500) } : null;
+  }
+  if (b.prices && typeof b.prices === 'object') {
+    const prices = {};
+    for (const [ml, price] of Object.entries(b.prices)) {
+      const n = Math.round(Number(price));
+      if (n > 0) prices[Number(ml)] = n;
+    }
+    out.prices = Object.keys(prices).length ? prices : (existing.prices || null);
   }
   return out;
 }
