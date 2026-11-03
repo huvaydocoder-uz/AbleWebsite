@@ -1144,3 +1144,12 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
   filter: drop-shadow(0 0 14px rgba(212,173,106,.65)) drop-shadow(0 0 36px rgba(212,173,106,.3)) brightness(1.1);
   animation: logoGlow 3s ease-in-out infinite alternate;
 }
+
+/* ---- Footer about matni glow ---- */
+.footer-about-glow {
+  animation: textGlow 3s ease-in-out infinite alternate;
+}
+@keyframes textGlow {
+  0%   { text-shadow: 0 0 8px rgba(212,173,106,.3), 0 0 20px rgba(212,173,106,.1); }
+  100% { text-shadow: 0 0 16px rgba(212,173,106,.65), 0 0 40px rgba(212,173,106,.25); }
+}
