@@ -1111,3 +1111,27 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 .modal-cart-hint:hover { background: rgba(212,173,106,.18); border-color: var(--gold-400); }
 .mch-icon { width: 16px; height: 16px; flex: none; color: var(--gold-500); }
 .mch-arrow { width: 14px; height: 14px; flex: none; margin-left: auto; }
+
+/* ---- Cart modal chap tomon: logo va sarlavha ---- */
+.cart-logo-glow {
+  width: 160px;
+  max-width: 72%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(212,173,106,.7)) drop-shadow(0 0 40px rgba(212,173,106,.35)) brightness(1.15);
+  animation: logoGlow 3s ease-in-out infinite alternate;
+}
+@keyframes logoGlow {
+  0%   { filter: drop-shadow(0 0 12px rgba(212,173,106,.55)) drop-shadow(0 0 30px rgba(212,173,106,.25)) brightness(1.1); }
+  100% { filter: drop-shadow(0 0 28px rgba(212,173,106,.9)) drop-shadow(0 0 60px rgba(212,173,106,.5)) brightness(1.25); }
+}
+.cart-hero-title {
+  margin-top: 24px;
+  font-family: var(--font-display, serif);
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-align: center;
+  color: var(--cream-100);
+  text-shadow: 0 0 24px rgba(212,173,106,.6), 0 2px 6px rgba(0,0,0,.4);
+  line-height: 1.3;
+}
