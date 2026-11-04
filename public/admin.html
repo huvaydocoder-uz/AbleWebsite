@@ -72,8 +72,13 @@
         <img src="assets/logo-dark.png" alt="Able Parfum" class="h-20 mb-10 lg:hidden" />
         <h1 class="font-display text-5xl text-wine-900">Xush kelibsiz</h1>
         <p class="text-wine-800/80 mt-2">Admin panelga kirish uchun ma'lumotlaringizni kiriting.</p>
-        <label class="block mt-8"><span class="lbl">Login (email)</span><input class="inp" name="email" type="email" autocomplete="username" required /></label>
-        <label class="block mt-4"><span class="lbl">Parol</span><input class="inp" name="password" type="password" autocomplete="current-password" required /></label>
+        <label class="block mt-8"><span class="lbl">Login (email)</span><input class="inp" name="email" type="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required /></label>
+        <label class="block mt-4"><span class="lbl">Parol</span>
+          <span class="relative block">
+            <input class="inp" style="padding-right:96px" name="password" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required />
+            <button type="button" id="pwToggle" class="absolute text-xs font-semibold text-wine-700 px-3 rounded-full" style="right:8px; top:50%; transform:translateY(-50%); padding-top:6px; padding-bottom:6px" aria-label="Parolni ko'rsatish">Ko'rsatish</button>
+          </span>
+        </label>
         <p id="loginError" class="hidden mt-4 text-sm text-red-700 bg-red-50 rounded-xl px-3 py-2"></p>
         <button class="btn btn-wine w-full mt-6 py-3" type="submit">Kirish</button>
         <a href="./" class="block text-center text-sm text-wine-600 mt-6">← Saytga qaytish</a>

@@ -39,12 +39,19 @@
   }
 
   // ------------------------------------------------------------ auth
+  $('#pwToggle').addEventListener('click', (e) => {
+    const inp = $('#loginForm').password, show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    e.currentTarget.textContent = show ? 'Yashirish' : "Ko'rsatish";
+    e.currentTarget.setAttribute('aria-label', show ? 'Parolni yashirish' : "Parolni ko'rsatish");
+  });
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const f = e.target, err = $('#loginError');
     err.classList.add('hidden');
     try {
-      const r = await api('admin/login', { method: 'POST', body: { email: f.email.value, password: f.password.value } });
+      // Telefonda nusxalash/avto-to'ldirishdan qolgan bo'sh joylar parolni buzmasin
+      const r = await api('admin/login', { method: 'POST', body: { email: f.email.value.trim(), password: f.password.value.trim() } });
       token = r.token; ss.set('able-admin-token', token);
       f.reset();
       start();
