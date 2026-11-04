@@ -5,7 +5,7 @@
  *   public/ru/index.html  — ruscha
  *   public/en/index.html  — inglizcha
  * Har biriga: title/description/keywords, canonical + hreflang, Open Graph, JSON-LD (Store, WebSite,
- * FAQPage, mahsulotlar ro'yxati) va ko'rinadigan "brendlar va atirlar" bloki qo'shiladi.
+ * FAQPage, mahsulotlar ro'yxati) qo'shiladi.
  * Yana sitemap.xml va robots.txt yoziladi.
  *
  * Ishga tushirish:  node scripts/build-seo.js   (i18n.js, catalog.json yoki index.html o'zgarganda)
@@ -54,8 +54,6 @@ const SEO = {
     title: 'Able Parfum — premium atirlar do‘koni | Original atirlar 10 ml dan, O‘zbekiston',
     description: `Able Parfum — O‘zbekistondagi premium parfyumeriya uyi. ${topBrands.slice(0, 5).join(', ')} va ${products.length} dan ortiq mashhur atirlar 10 ml dan, ${money(minPrice)} so‘mdan. Onlayn buyurtma va yetkazib berish.`,
     indexTitle: 'Katalogimizdagi brendlar va atirlar',
-    indexLead: `Able Parfum — dunyoning eng mashhur parfyumeriya brendlari bir joyda: ${brands.join(', ')}. Har bir atirni ${sizes.map((s) => s.ml).join(', ')} ml hajmda, ${money(minPrice)} so‘mdan buyurtma qiling. Erkaklar, ayollar va uniseks atirlar, sovg‘a uchun brendli qadoq.`,
-    other: 'Boshqa atirlar',
     base: [
       'Able Parfum', 'Able Parfume', 'Able Perfume', 'Able Parfums', 'Able atir', 'Able atirlar', 'ableparfume', 'able parfum uz',
       'Able Parfum O‘zbekiston', 'Able Parfum do‘koni', 'Able Parfum katalog', 'Shuxrat Gafurov', 'Shuxrat Gafurov atir', 'Shuxrat Gafurov Able',
@@ -73,8 +71,6 @@ const SEO = {
     title: 'Able Parfum — магазин премиальной парфюмерии | Духи на разлив от 10 мл, Узбекистан',
     description: `Able Parfum — дом премиальной парфюмерии в Узбекистане. ${topBrands.slice(0, 5).join(', ')} и ${products.length}+ знаменитых ароматов от 10 мл, от ${money(minPrice)} сум. Онлайн-заказ и доставка.`,
     indexTitle: 'Бренды и ароматы в нашем каталоге',
-    indexLead: `Able Parfum — самые известные парфюмерные бренды мира в одном месте: ${brands.join(', ')}. Любой аромат можно заказать объёмом ${sizes.map((s) => s.ml).join(', ')} мл, от ${money(minPrice)} сум. Мужские, женские и унисекс ароматы, фирменная упаковка для подарка.`,
-    other: 'Другие ароматы',
     base: [
       'Able Parfum', 'Able Parfume', 'Able Perfume', 'Эйбл Парфюм', 'Эйбл парфюм Узбекистан', 'Able парфюм', 'Able духи', 'ableparfume',
       'Able Parfum Узбекистан', 'Able Parfum магазин', 'Able Parfum каталог', 'Шухрат Гафуров', 'Шухрат Гафуров парфюм', 'Шухрат Гафуров Able',
@@ -92,8 +88,6 @@ const SEO = {
     title: 'Able Parfum — Premium Fragrance Store in Uzbekistan | Perfume Decants from 10 ml',
     description: `Able Parfum is a premium fragrance house in Uzbekistan. ${topBrands.slice(0, 5).join(', ')} and ${products.length}+ iconic perfumes from 10 ml, from ${money(minPrice)} UZS. Order online with pickup or delivery.`,
     indexTitle: 'Brands and fragrances in our catalog',
-    indexLead: `Able Parfum brings the world’s most famous perfume houses together: ${brands.join(', ')}. Order any fragrance in ${sizes.map((s) => s.ml).join(', ')} ml sizes, from ${money(minPrice)} UZS. Men’s, women’s and unisex scents, with branded gift packaging.`,
-    other: 'More fragrances',
     base: [
       'Able Parfum', 'Able Parfume', 'Able Perfume', 'Able Parfums', 'Able fragrance', 'ableparfume', 'Able Parfum Uzbekistan', 'Able Parfum store',
       'Able Parfum catalog', 'Shuxrat Gafurov', 'Shuxrat Gafurov perfume', 'Shukhrat Gafurov', 'perfume', 'perfumes', 'fragrance', 'fragrances',
@@ -199,32 +193,6 @@ function headBlock(lang) {
   ].map((l) => '    ' + l).join('\n');
 }
 
-// ------------------------------------------------------------------ ko'rinadigan brendlar bloki
-function brandIndex(lang) {
-  const S = SEO[lang];
-  const groups = new Map();
-  for (const p of products) {
-    const k = p.brand || S.other;
-    if (!groups.has(k)) groups.set(k, []);
-    groups.get(k).push(p);
-  }
-  const ordered = [...groups].sort((x, y) => (x[0] === S.other) - (y[0] === S.other)); // brendsizlar oxirida
-  const html = ordered.map(([b, ps]) => `          <div class="bi-group"><h3>${esc(b)}</h3><p>${ps.map((p) => `<a href="#p=${esc(p.id)}">${esc(p.name)}</a>`).join(', ')}</p></div>`);
-  return [
-    '    <!-- seo-index:start (scripts/build-seo.js yaratadi) -->',
-    '    <section class="brand-index" aria-labelledby="brandIndexTitle">',
-    '      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">',
-    `        <h2 id="brandIndexTitle" class="brand-index-title">${esc(S.indexTitle)}</h2>`,
-    `        <p class="brand-index-lead">${esc(S.indexLead)}</p>`,
-    '        <div class="brand-index-grid">',
-    ...html,
-    '        </div>',
-    '      </div>',
-    '    </section>',
-    '    <!-- seo-index:end -->',
-  ].join('\n');
-}
-
 // ------------------------------------------------------------------ data-i18n matnlarini to'ldirish
 function fillI18n(html, lang) {
   // ichida boshqa teg bo'lmagan elementlar: <tag ... data-i18n="key" ...>matn</tag>
@@ -250,15 +218,14 @@ function build(template, lang) {
   h = h.replace(/<html lang="[a-z]+"/, `<html lang="${lang}"`);
   // eski SEO bloklari va qo'lda yozilgan meta teglarni olib tashlaymiz, keyin yangisini qo'yamiz
   h = h.replace(/[ \t]*<!-- seo:start[\s\S]*?<!-- seo:end -->\r?\n?/, '');
-  h = h.replace(/[ \t]*<!-- seo-index:start[\s\S]*?<!-- seo-index:end -->\r?\n?/, '');
+  h = h.replace(/[ \t]*<!-- seo-index:start[\s\S]*?<!-- seo-index:end -->\r?\n?/, ''); // olib tashlangan brendlar bloki qoldig'i
   h = h.replace(/[ \t]*<title>[\s\S]*?<\/title>\r?\n?/, '');
   h = h.replace(/[ \t]*<meta\s+name="description"[\s\S]*?\/>\r?\n?/, '');
   h = h.replace(/[ \t]*<meta\s+property="og:[^"]+"[\s\S]*?\/>\r?\n?/g, '');
   h = h.replace(/(<meta name="theme-color"[^>]*>\r?\n)/, `$1${headBlock(lang)}\n`);
-  h = h.replace(/([ \t]*<footer class="footer">)/, `${brandIndex(lang)}\n$1`);
   h = h.replace(/(<div class="faq-list[^"]*" id="faqList">)[\s\S]*?(<\/div>\s*<\/div>\s*<\/section>)/, (m, a, b) => a + faqHtml(lang) + b);
   h = fillI18n(h, lang);
-  if (!h.includes('<!-- seo:start') || !h.includes('<!-- seo-index:start')) throw new Error('marker joyi topilmadi: ' + lang);
+  if (!h.includes('<!-- seo:start')) throw new Error('marker joyi topilmadi: ' + lang);
   return h;
 }
 

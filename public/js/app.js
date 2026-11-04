@@ -1049,12 +1049,6 @@
       state.settings = { ...state.settings, ...data.settings };
       state.products = data.products.filter((p) => p.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       applyI18n();
-      // Brendlar ro'yxatidagi havolalar (#p=id) bosilganda atir oynasi ochilsin
-      window.addEventListener('hashchange', () => {
-        const h = location.hash.match(/^#p=([\w-]+)/);
-        const p = h && state.products.find((x) => x.id === h[1]);
-        if (p && $('#productModal').hidden) openModal(p);
-      });
       const m = location.hash.match(/^#p=([\w-]+)/);
       if (m) {
         const p = state.products.find((x) => x.id === m[1]);
