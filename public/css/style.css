@@ -1220,7 +1220,7 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
   padding: 22px 46px; border-radius: 99px;
   font-size: 17px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff;
   text-shadow: 0 1px 2px rgba(80, 10, 30, .35);
-  background: linear-gradient(110deg, #e8175d, #ff5a1f, #f0207a, #9b2cf0, #e8175d);
+  background: linear-gradient(110deg, #d0124f, #c2410c, #c8146a, #8424d6, #d0124f);
   background-size: 300% 100%;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .5) inset, 0 14px 40px rgba(255, 61, 127, .4), 0 0 60px rgba(255, 138, 61, .35);
   animation: vividFlow 6s linear infinite, vividGlow 2.4s ease-in-out infinite;
