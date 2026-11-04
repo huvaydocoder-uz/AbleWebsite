@@ -13,7 +13,8 @@
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const state = {
-    lang: ['uz', 'ru', 'en'].includes(store.get('able-lang')) ? store.get('able-lang') : 'uz',
+    // Til sahifa manzilidan olinadi: / — uz, /ru/ — ru, /en/ — en (har biri qidiruv tizimlari uchun alohida sahifa)
+    lang: ['uz', 'ru', 'en'].includes(document.documentElement.lang) ? document.documentElement.lang : 'uz',
     products: [],
     settings: { sizes: [{ ml: 10, price: 150000 }, { ml: 20, price: 280000 }, { ml: 30, price: 400000 }, { ml: 50, price: 650000 }], globalDiscount: 0 },
     filter: 'all',
@@ -112,15 +113,17 @@
     }, 60 * 1000);
   }
 
+  const LANG_URL = { uz: '/', ru: '/ru/', en: '/en/' };
   function setLang(lang, btn) {
     if (lang === state.lang) return;
     state.lang = lang;
     store.set('able-lang', lang);
     if (btn && !reduceMotion) puff(btn);
     document.body.classList.add('lang-out');
-    $$('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === lang));
+    $('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === lang));
     moveLangIndicator();
-    setTimeout(() => { applyI18n(); requestAnimationFrame(() => document.body.classList.remove('lang-out')); }, reduceMotion ? 0 : 320);
+    // Har bir tilning o'z manzili bor — o'sha sahifaga o'tamiz (animatsiya tugagach)
+    setTimeout(() => { location.href = LANG_URL[lang] + location.hash; }, reduceMotion ? 0 : 320);
   }
 
   // Til tugmasi bosilganda atir purkalgandek zarrachalar
@@ -1028,6 +1031,9 @@
 
   // ------------------------------------------------------------ boot
   async function boot() {
+    // Avval boshqa tilni tanlagan mehmon bosh sahifaga kirsa — o'z tilidagi sahifaga (qidiruv botlarida localStorage bo'lmaydi)
+    const pref = store.get('able-lang');
+    if (state.lang === 'uz' && location.pathname === '/' && (pref === 'ru' || pref === 'en')) { location.replace(LANG_URL[pref] + location.hash); return; }
     $('#year').textContent = new Date().getFullYear();
     applyI18n();
     bind();
@@ -1043,6 +1049,12 @@
       state.settings = { ...state.settings, ...data.settings };
       state.products = data.products.filter((p) => p.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       applyI18n();
+      // Brendlar ro'yxatidagi havolalar (#p=id) bosilganda atir oynasi ochilsin
+      window.addEventListener('hashchange', () => {
+        const h = location.hash.match(/^#p=([\w-]+)/);
+        const p = h && state.products.find((x) => x.id === h[1]);
+        if (p && $('#productModal').hidden) openModal(p);
+      });
       const m = location.hash.match(/^#p=([\w-]+)/);
       if (m) {
         const p = state.products.find((x) => x.id === m[1]);

@@ -1,7 +1,7 @@
 /* Able Parfum — uch tilli matnlar (uz / ru / en) */
 window.I18N = {
   uz: {
-    'meta.title': 'Able Parfum — O‘zingizga mos hidni toping | O‘zbekiston',
+    'meta.title': 'Able Parfum — premium atirlar do‘koni | Original atirlar 10 ml dan, O‘zbekiston',
     'intro.slogan': 'O‘zingizga mos hidni toping',
     'intro.skip': 'O‘tkazib yuborish',
 
@@ -246,7 +246,7 @@ window.I18N = {
   },
 
   ru: {
-    'meta.title': 'Able Parfum — Найдите свой аромат | Узбекистан',
+    'meta.title': 'Able Parfum — магазин премиальной парфюмерии | Духи на разлив от 10 мл, Узбекистан',
     'intro.slogan': 'Найдите свой аромат',
     'intro.skip': 'Пропустить',
 
@@ -491,7 +491,7 @@ window.I18N = {
   },
 
   en: {
-    'meta.title': 'Able Parfum — Find your signature scent | Uzbekistan',
+    'meta.title': 'Able Parfum — Premium Fragrance Store in Uzbekistan | Perfume Decants from 10 ml',
     'intro.slogan': 'Find your signature scent',
     'intro.skip': 'Skip',
 

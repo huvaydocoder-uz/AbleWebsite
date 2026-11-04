@@ -326,7 +326,7 @@ async function buildStats() {
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
+  '.xml': 'application/xml; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
 };
 
 function send(res, status, body, headers = {}) {
@@ -630,7 +630,10 @@ async function api(req, res, pathname) {
 // ---------------------------------------------------------------- server
 // Bitta ishlovchi: lokal http server ham, Vercel funksiyasi (api/index.js) ham shuni chaqiradi
 async function handler(req, res) {
-  const { pathname } = new URL(req.url, 'http://x');
+  let { pathname } = new URL(req.url, 'http://x');
+  // /ru/ va /en/ — tilga xos sahifalar; ulardagi nisbiy yo'llar (api/, css/, assets/…) ildizdagi fayllarga boradi (vercel.json bilan bir xil)
+  const lm = pathname.match(/^\/(ru|en)(\/.*)?$/);
+  if (lm) pathname = !lm[2] || lm[2] === '/' || lm[2] === '/index.html' ? `/${lm[1]}/index.html` : lm[2];
   try {
     if (pathname.startsWith('/api/')) return await api(req, res, pathname);
     if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'Method not allowed');
