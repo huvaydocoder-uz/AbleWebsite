@@ -216,11 +216,40 @@ async function sendTelegram(text, settings) {
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
     });
     const j = await r.json();
+    return j.ok ? { ok: true, messageId: j.result && j.result.message_id } : { ok: false, reason: j.description || 'telegram_error' };
+  } catch (e) {
+    return { ok: false, reason: e.message };
+  }
+}
+
+// Mijoz yuborgan geolokatsiya — buyurtma xabariga javob sifatida xarita nuqtasi bo'lib boradi
+async function sendTelegramLocation(loc, replyTo, settings) {
+  const { botToken, chatId } = telegramConfig(settings);
+  if (!botToken || !chatId) return { ok: false, reason: 'not_configured' };
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${botToken}/sendLocation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId, latitude: loc.lat, longitude: loc.lng,
+        ...(loc.acc ? { horizontal_accuracy: Math.min(1500, loc.acc) } : {}),
+        ...(replyTo ? { reply_parameters: { message_id: replyTo, allow_sending_without_reply: true } } : {}),
+      }),
+    });
+    const j = await r.json();
     return j.ok ? { ok: true } : { ok: false, reason: j.description || 'telegram_error' };
   } catch (e) {
     return { ok: false, reason: e.message };
   }
 }
+
+function cleanLocation(l) {
+  if (!l || typeof l !== 'object') return null;
+  const lat = Number(l.lat), lng = Number(l.lng), acc = Math.round(Number(l.acc) || 0);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) return null;
+  return { lat: +lat.toFixed(6), lng: +lng.toFixed(6), acc: Math.max(0, Math.min(100000, acc)) };
+}
+const mapsLink = (l) => `https://maps.google.com/?q=${l.lat},${l.lng}`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 const som = (n) => Number(n).toLocaleString('ru-RU').replace(/,/g, ' ') + " so'm";
@@ -234,6 +263,7 @@ function orderMessage(o) {
     `🚚 <b>Olish usuli:</b> ${o.delivery === 'delivery' ? 'Yetkazib berish' : "Do'kondan olib ketish"}`,
   ];
   if (o.address) lines.push(`📍 <b>Manzil:</b> ${esc(o.address)}`);
+  if (o.location) lines.push(`🗺 <b>Lokatsiya:</b> ${mapsLink(o.location)}${o.location.acc ? ` (±${o.location.acc} m)` : ''}`);
   lines.push('', '<b>Buyurtma:</b>');
   for (const it of o.items) {
     lines.push(`• ${esc(it.name)}${it.brand ? ' (' + esc(it.brand) + ')' : ''} — ${it.ml} ml × ${it.qty} = ${som(it.unitPrice * it.qty)}`);
@@ -445,6 +475,7 @@ async function api(req, res, pathname) {
       name, phone,
       delivery: b.delivery === 'delivery' ? 'delivery' : 'pickup',
       address: clean(b.address, 300),
+      location: b.delivery === 'delivery' ? cleanLocation(b.location) : null,
       comment: clean(b.comment, 500),
       lang: ['uz', 'ru', 'en'].includes(b.lang) ? b.lang : 'uz',
       items,
@@ -454,6 +485,7 @@ async function api(req, res, pathname) {
     };
     const tg = await sendTelegram(orderMessage(order), s);
     order.telegramSent = tg.ok;
+    if (tg.ok && order.location) await sendTelegramLocation(order.location, tg.messageId, s);
     orders.push(order);
     await store.write('orders', orders);
     return send(res, 201, { ok: true, id: order.id, total: order.total, telegramSent: tg.ok, message: tg.ok ? null : orderMessage(order).replace(/<[^>]+>/g, '') });

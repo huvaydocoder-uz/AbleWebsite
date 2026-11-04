@@ -43,6 +43,7 @@
       el.textContent = val;
     });
     $$('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+    $$('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
     $$('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === state.lang));
     moveLangIndicator();
     renderPain();
@@ -627,11 +628,41 @@
       `📞 Telefon: ${o.phone}`,
       `🚚 ${o.delivery === 'delivery' ? 'Yetkazib berish' : "Do'kondan olib ketish"}`,
       o.address ? `📍 Manzil: ${o.address}` : '',
+      o.location ? `🗺 Lokatsiya: ${mapsLink(o.location)}` : '',
       '',
       ...items.map((x) => `• ${x.product.name}${x.product.brand ? ' (' + x.product.brand + ')' : ''} — ${x.ml} ml × ${x.qty}`),
       `💰 Jami: ${money(total)} so'm`,
       o.comment ? `💬 ${o.comment}` : '',
     ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n');
+  }
+
+  // ---- Yetkazib berish: mijozning geolokatsiyasi (Telegram'ga xarita nuqtasi bo'lib boradi)
+  let geo = null; // { lat, lng, acc }
+  const mapsLink = (g) => `https://maps.google.com/?q=${g.lat},${g.lng}`;
+  function setGeoUi(mode, msg) {
+    const btn = $('#geoBtn'), m = $('#geoMsg');
+    btn.classList.toggle('is-loading', mode === 'loading');
+    btn.classList.toggle('is-ok', mode === 'ok');
+    btn.disabled = mode === 'loading';
+    const lbl = $('#geoLabel');
+    lbl.dataset.i18n = mode === 'loading' ? 'modal.geoLoading' : mode === 'ok' ? 'modal.geoOk' : 'modal.geo'; // til almashganda ham to'g'ri qolsin
+    lbl.textContent = t(lbl.dataset.i18n);
+    $('#geoRemove').classList.toggle('hidden', mode !== 'ok');
+    m.textContent = msg || '';
+    m.classList.toggle('hidden', !msg);
+    m.classList.toggle('is-error', mode === 'error');
+  }
+  function resetGeo() { geo = null; setGeoUi('idle'); }
+  function requestGeo() {
+    if (!('geolocation' in navigator)) return setGeoUi('error', t('modal.geoUnsupported'));
+    setGeoUi('loading');
+    navigator.geolocation.getCurrentPosition((p) => {
+      geo = { lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy || 0) };
+      setGeoUi('ok', geo.acc ? t('modal.geoAcc', { m: geo.acc }) : '');
+    }, (er) => {
+      geo = null;
+      setGeoUi('error', t(er.code === 1 ? 'modal.geoDenied' : 'modal.geoFail'));
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
   }
 
   let cartCheckoutItems = null; // null = single product mode, array = cart mode
@@ -646,6 +677,7 @@
       address: f.address.value.trim(),
       comment: f.comment.value.trim(),
     };
+    if (od.delivery === 'delivery' && geo) od.location = geo;
     const err = $('#formError');
     const phoneDigits = od.phone.replace(/\D/g, '');
     f.name.closest('.field').classList.toggle('has-error', od.name.length < 2);
@@ -703,6 +735,8 @@
     f.reset();
     f.phone.value = '+998 ';
     $('#addrField').classList.add('hidden');
+    $('#geoField').classList.add('hidden');
+    resetGeo();
     showStep('done');
   }
 
@@ -850,8 +884,12 @@
     });
     $('#cartClear').addEventListener('click', () => { cart.splice(0); updateCartBadge(); renderCartItems(); });
     $$('#orderForm [name=delivery]').forEach((r) => r.addEventListener('change', () => {
-      $('#addrField').classList.toggle('hidden', $('#orderForm').delivery.value !== 'delivery');
+      const del = $('#orderForm').delivery.value === 'delivery';
+      $('#addrField').classList.toggle('hidden', !del);
+      $('#geoField').classList.toggle('hidden', !del);
     }));
+    $('#geoBtn').addEventListener('click', requestGeo);
+    $('#geoRemove').addEventListener('click', resetGeo);
     $('#orderForm [name=phone]').addEventListener('input', (e) => {
       // +998 XX XXX XX XX formatlash
       let d = e.target.value.replace(/\D/g, '');

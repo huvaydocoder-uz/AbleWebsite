@@ -1189,3 +1189,25 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 [data-theme='light'] .store-cta-btn { color: var(--cream-50); background: linear-gradient(135deg, var(--wine-500, #8a2a3e), var(--wine-800)); box-shadow: 0 14px 40px rgba(100, 22, 40, .35), 0 0 60px rgba(212, 173, 106, .3); animation: none; }
 @media (max-width: 640px) { .store-cta { margin-top: 44px; } .store-cta-btn { width: 100%; justify-content: center; padding: 20px 28px; font-size: 15px; } }
 @media (prefers-reduced-motion: reduce) { .store-cta-btn, .store-cta-btn::after { animation: none; } }
+
+/* ---- Buyurtma formasi: geolokatsiya yuborish ---- */
+.geo { position: relative; margin: -4px 0 14px; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.geo-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  padding: 13px 16px; border-radius: 14px; border: 1.5px dashed rgba(100, 22, 40, .35); background: rgba(100, 22, 40, .04);
+  color: var(--wine-800); font-size: 14px; font-weight: 600; cursor: pointer; transition: background .3s, border-color .3s, color .3s;
+}
+.geo-btn svg { width: 20px; height: 20px; flex: none; }
+.geo-btn:hover { background: rgba(100, 22, 40, .08); border-color: var(--wine-600); }
+.geo-btn:focus-visible { outline: 2px solid var(--wine-500); outline-offset: 2px; }
+.geo-btn.is-loading { cursor: progress; opacity: .75; }
+.geo-btn.is-loading svg { animation: geoPulse 1s ease-in-out infinite; }
+.geo-btn.is-ok { border-style: solid; border-color: #2f7d4f; background: #e9f6ee; color: #1f5c39; }
+.geo-remove { width: 48px; display: grid; place-items: center; border-radius: 14px; border: 1.5px solid rgba(58, 10, 20, .12); background: #fff; color: rgba(58, 10, 20, .6); cursor: pointer; }
+.geo-remove svg { width: 18px; height: 18px; }
+.geo-remove:hover { color: #9b1c33; border-color: #c2334d; }
+.geo-msg { grid-column: 1 / -1; font-size: 12.5px; line-height: 1.45; color: rgba(58, 10, 20, .65); }
+.geo-msg.is-error { padding: 8px 12px; border-radius: 10px; background: #fbe6ea; color: #9b1c33; }
+.geo.hidden, .geo .hidden { display: none; }
+@keyframes geoPulse { 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .geo-btn.is-loading svg { animation: none; } }

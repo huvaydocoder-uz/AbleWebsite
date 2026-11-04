@@ -148,7 +148,7 @@
         <td><b>${esc(o.name)}</b><br /><a class="text-wine-600" href="tel:${esc(o.phone.replace(/\s/g, ''))}">${esc(o.phone)}</a></td>
         <td>${o.items.map((i) => `${esc(i.name)} · ${i.ml} ml × ${i.qty}${i.discount ? ` <span class="pill st-new">−${i.discount}%</span>` : ''}`).join('<br />')}${o.comment ? `<br /><i class="text-wine-800/80">“${esc(o.comment)}”</i>` : ''}</td>
         <td class="whitespace-nowrap font-bold">${money(o.total)} so'm</td>
-        <td>${o.delivery === 'delivery' ? `Yetkazish${o.address ? `<br /><small class="text-wine-800/80">${esc(o.address)}</small>` : ''}` : "Do'kondan"}</td>
+        <td>${o.delivery === 'delivery' ? `Yetkazish${o.address ? `<br /><small class="text-wine-800/80">${esc(o.address)}</small>` : ''}${o.location ? `<br /><a class="text-wine-600 underline text-xs" href="https://maps.google.com/?q=${o.location.lat},${o.location.lng}" target="_blank" rel="noopener">📍 Xaritada</a>` : ''}` : "Do'kondan"}</td>
         <td><select class="inp !py-1.5 !text-xs st-${o.status}" data-status>${Object.entries(STATUS).map(([k, v]) => `<option value="${k}"${k === o.status ? ' selected' : ''}>${v}</option>`).join('')}</select></td>
         <td><input class="inp !py-1.5 !text-xs min-w-[140px]" data-note value="${esc(o.note || '')}" placeholder="Izoh…" /></td>
       </tr>`).join('');
@@ -168,10 +168,10 @@
   });
 
   $('#exportCsv').addEventListener('click', () => {
-    const rows = [['Buyurtma', 'Sana', 'Mijoz', 'Telefon', 'Mahsulotlar', 'Summa', 'Olish usuli', 'Manzil', 'Izoh', 'Holat', 'Admin izohi']];
+    const rows = [['Buyurtma', 'Sana', 'Mijoz', 'Telefon', 'Mahsulotlar', 'Summa', 'Olish usuli', 'Manzil', 'Lokatsiya', 'Izoh', 'Holat', 'Admin izohi']];
     for (const o of filteredOrders()) {
       rows.push([o.id, fmtDate(o.createdAt), o.name, o.phone, o.items.map((i) => `${i.name} ${i.ml}ml x${i.qty}`).join('; '), o.total,
-        o.delivery === 'delivery' ? 'Yetkazish' : "Do'kondan", o.address, o.comment, STATUS[o.status], o.note || '']);
+        o.delivery === 'delivery' ? 'Yetkazish' : "Do'kondan", o.address, o.location ? `https://maps.google.com/?q=${o.location.lat},${o.location.lng}` : '', o.comment, STATUS[o.status], o.note || '']);
     }
     const csv = '﻿' + rows.map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a');
