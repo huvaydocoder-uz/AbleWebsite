@@ -486,7 +486,7 @@
 
   function renderContact() {
     const s = state.settings;
-    const addr = (s.address && s.address[state.lang]) || 'Buxoro';
+    const addr = (s.address && s.address[state.lang]) || 'O‘zbekiston';
     $('#addrText').textContent = addr;
     $('#footerAddr').textContent = addr;
     const lm = s.landmark && s.landmark[state.lang];

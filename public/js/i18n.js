@@ -1,7 +1,7 @@
 /* Able Parfum — uch tilli matnlar (uz / ru / en) */
 window.I18N = {
   uz: {
-    'meta.title': 'Able Parfum — O‘zingizga mos hidni toping | Buxoro',
+    'meta.title': 'Able Parfum — O‘zingizga mos hidni toping | O‘zbekiston',
     'intro.slogan': 'O‘zingizga mos hidni toping',
     'intro.skip': 'O‘tkazib yuborish',
 
@@ -16,7 +16,7 @@ window.I18N = {
     'nav.menu': 'Menyu',
     'header.call': 'Telefon qilish',
 
-    'hero.eyebrow': 'Buxorodagi premium parfyumeriya uyi',
+    'hero.eyebrow': 'O‘zbekistondagi premium parfyumeriya uyi',
     'hero.title1': 'O‘zingizga mos',
     'hero.title2': 'hidni toping',
     'hero.lead': 'Dunyoning eng mashhur 60 dan ortiq atirlari bir joyda. 10 ml dan boshlab, hamyonbop narxda. Sizni eslab qolishlariga sabab bo‘ladigan hid shu yerda.',
@@ -151,17 +151,17 @@ window.I18N = {
 
     'founder.eyebrow': 'Asoschi',
     'founder.title': 'Shuhrat Gafurov',
-    'founder.role': 'Able Parfum asoschisi · Buxorodagi top-blogerlardan biri',
-    'founder.p1': 'Shuhrat Gafurov — Buxoroning eng taniqli va sevimli blogerlaridan biri. U har kuni minglab insonlar bilan samimiy muloqot qiladi va ularga foydali, ilhomlantiruvchi kontent ulashadi.',
+    'founder.role': 'Able Parfum asoschisi · O‘zbekistondagi top-blogerlardan biri',
+    'founder.p1': 'Shuhrat Gafurov — O‘zbekistonning eng taniqli va sevimli blogerlaridan biri. U har kuni minglab insonlar bilan samimiy muloqot qiladi va ularga foydali, ilhomlantiruvchi kontent ulashadi.',
     'founder.p2': 'Able Parfum oddiy g‘oyadan tug‘ilgan: har bir inson dunyoning eng yaxshi hidlarini ortiqcha xarajatsiz his qila olishi kerak. Shuhrat har bir hidni shaxsan tanlaydi va brend sifatiga o‘z nomi bilan javob beradi.',
     'founder.quote': '«Yaxshi hid — bu hashamat emas, bu o‘zingizga bo‘lgan hurmat.»',
     'founder.ig': 'Instagram sahifasi',
 
     'trust.eyebrow': 'Sizga ishonsa bo‘ladimi?',
     'trust.title': 'Ochiq, real va yaqin',
-    'trust.lead': 'Biz internetdagi noma’lum sahifa emasmiz. Buxoroda haqiqiy do‘konimiz bor: kelib, hidlab ko‘rib, keyin tanlaysiz.',
+    'trust.lead': 'Biz internetdagi noma’lum sahifa emasmiz. O‘zbekistonda haqiqiy do‘konimiz bor: kelib, hidlab ko‘rib, keyin tanlaysiz.',
     'trust.t1.t': 'Haqiqiy do‘kon',
-    'trust.t1.d': 'Buxoroda do‘konimiz ochiq. Istalgan hidni joyida sinab ko‘ring.',
+    'trust.t1.d': 'O‘zbekistonda do‘konimiz ochiq. Istalgan hidni joyida sinab ko‘ring.',
     'trust.t2.t': 'Ochiq narxlar',
     'trust.t2.d': 'Barcha narxlar saytda yozilgan. Yashirin to‘lovlar yo‘q.',
     'trust.t3.t': 'Asoschi javobgarligi',
@@ -209,7 +209,7 @@ window.I18N = {
     'gal.bag.d': 'Atiringiz aloqa ma’lumotlarimiz yozilgan brendli paketda qo‘lingizda.',
     'gal.sign.t': 'Able belgisi',
     'gal.sign.d': 'Ichkaridagi yoritilgan dumaloq panno — suratga tushish uchun ajoyib joy.',
-    'gal.night.t': 'Tungi Buxoroda',
+    'gal.night.t': 'Tungi O‘zbekiston',
     'gal.night.d': 'Oltin harflar va naqshinkor temir bezaklar — do‘konimizni uzoqdan taniysiz.',
 
     'contact.eyebrow': 'Bizning manzil',
@@ -223,7 +223,7 @@ window.I18N = {
     'contact.call': 'Qo‘ng‘iroq qilish',
 
     'footer.slogan': 'O‘zingizga mos hidni toping',
-    'footer.about': 'Buxorodagi premium parfyumeriya uyi. Dunyo atirlari — sizga qulay hajmda.',
+    'footer.about': 'O‘zbekistondagi premium parfyumeriya uyi. Dunyo atirlari — sizga qulay hajmda.',
     'footer.menu': 'Menyu',
     'footer.contacts': 'Aloqa',
     'footer.social': 'Ijtimoiy tarmoqlar',
@@ -237,7 +237,7 @@ window.I18N = {
   },
 
   ru: {
-    'meta.title': 'Able Parfum — Найдите свой аромат | Бухара',
+    'meta.title': 'Able Parfum — Найдите свой аромат | Узбекистан',
     'intro.slogan': 'Найдите свой аромат',
     'intro.skip': 'Пропустить',
 
@@ -252,7 +252,7 @@ window.I18N = {
     'nav.menu': 'Меню',
     'header.call': 'Позвонить',
 
-    'hero.eyebrow': 'Дом премиальной парфюмерии в Бухаре',
+    'hero.eyebrow': 'Дом премиальной парфюмерии в Узбекистане',
     'hero.title1': 'Найдите',
     'hero.title2': 'свой аромат',
     'hero.lead': 'Более 60 самых известных ароматов мира в одном месте. От 10 мл по доступной цене. Аромат, благодаря которому вас запомнят, — здесь.',
@@ -387,17 +387,17 @@ window.I18N = {
 
     'founder.eyebrow': 'Основатель',
     'founder.title': 'Шухрат Гафуров',
-    'founder.role': 'Основатель Able Parfum · один из топ-блогеров Бухары',
-    'founder.p1': 'Шухрат Гафуров — один из самых известных и любимых блогеров Бухары. Каждый день он искренне общается с тысячами людей и делится полезным, вдохновляющим контентом.',
+    'founder.role': 'Основатель Able Parfum · один из топ-блогеров Узбекистана',
+    'founder.p1': 'Шухрат Гафуров — один из самых известных и любимых блогеров Узбекистана. Каждый день он искренне общается с тысячами людей и делится полезным, вдохновляющим контентом.',
     'founder.p2': 'Able Parfum родился из простой идеи: каждый человек должен иметь возможность почувствовать лучшие ароматы мира без лишних затрат. Шухрат лично отбирает каждый аромат и отвечает за качество бренда своим именем.',
     'founder.quote': '«Хороший аромат — это не роскошь, это уважение к себе.»',
     'founder.ig': 'Страница в Instagram',
 
     'trust.eyebrow': 'Можно ли вам доверять?',
     'trust.title': 'Открыто, по-настоящему, рядом',
-    'trust.lead': 'Мы не безымянная страница в интернете. У нас настоящий магазин в Бухаре: приходите, пробуйте и выбирайте.',
+    'trust.lead': 'Мы не безымянная страница в интернете. У нас настоящий магазин в Узбекистане: приходите, пробуйте и выбирайте.',
     'trust.t1.t': 'Настоящий магазин',
-    'trust.t1.d': 'Наш магазин в Бухаре открыт. Попробуйте любой аромат на месте.',
+    'trust.t1.d': 'Наш магазин в Узбекистане открыт. Попробуйте любой аромат на месте.',
     'trust.t2.t': 'Открытые цены',
     'trust.t2.d': 'Все цены указаны на сайте. Никаких скрытых платежей.',
     'trust.t3.t': 'Ответственность основателя',
@@ -445,7 +445,7 @@ window.I18N = {
     'gal.bag.d': 'Ваш аромат — в фирменном пакете с нашими контактами.',
     'gal.sign.t': 'Знак Able',
     'gal.sign.d': 'Светящееся круглое панно внутри — отличное место для фото.',
-    'gal.night.t': 'Ночная Бухара',
+    'gal.night.t': 'Ночной Узбекистан',
     'gal.night.d': 'Золотые буквы и кованые узоры — наш магазин видно издалека.',
 
     'contact.eyebrow': 'Наш адрес',
@@ -459,7 +459,7 @@ window.I18N = {
     'contact.call': 'Позвонить',
 
     'footer.slogan': 'Найдите свой аромат',
-    'footer.about': 'Дом премиальной парфюмерии в Бухаре. Мировые ароматы — в удобном объёме.',
+    'footer.about': 'Дом премиальной парфюмерии в Узбекистане. Мировые ароматы — в удобном объёме.',
     'footer.menu': 'Меню',
     'footer.contacts': 'Контакты',
     'footer.social': 'Соцсети',
@@ -473,7 +473,7 @@ window.I18N = {
   },
 
   en: {
-    'meta.title': 'Able Parfum — Find your signature scent | Bukhara',
+    'meta.title': 'Able Parfum — Find your signature scent | Uzbekistan',
     'intro.slogan': 'Find your signature scent',
     'intro.skip': 'Skip',
 
@@ -488,7 +488,7 @@ window.I18N = {
     'nav.menu': 'Menu',
     'header.call': 'Call us',
 
-    'hero.eyebrow': 'Premium fragrance house in Bukhara',
+    'hero.eyebrow': 'Premium fragrance house in Uzbekistan',
     'hero.title1': 'Find your',
     'hero.title2': 'signature scent',
     'hero.lead': 'More than 60 of the world’s most iconic fragrances in one place. From 10 ml, at a fair price. The scent people will remember you by is right here.',
@@ -623,17 +623,17 @@ window.I18N = {
 
     'founder.eyebrow': 'Founder',
     'founder.title': 'Shuhrat Gafurov',
-    'founder.role': 'Founder of Able Parfum · one of Bukhara’s top bloggers',
-    'founder.p1': 'Shuhrat Gafurov is one of Bukhara’s best-known and best-loved bloggers. Every day he connects with thousands of people and shares useful, inspiring content.',
+    'founder.role': 'Founder of Able Parfum · one of Uzbekistan’s top bloggers',
+    'founder.p1': 'Shuhrat Gafurov is one of Uzbekistan’s best-known and best-loved bloggers. Every day he connects with thousands of people and shares useful, inspiring content.',
     'founder.p2': 'Able Parfum was born from a simple idea: everyone should be able to enjoy the world’s finest scents without overspending. Shuhrat personally selects every fragrance and puts his own name behind the brand’s quality.',
     'founder.quote': '“A good scent isn’t a luxury — it’s respect for yourself.”',
     'founder.ig': 'Instagram page',
 
     'trust.eyebrow': 'Can you trust us?',
     'trust.title': 'Open, real and close by',
-    'trust.lead': 'We’re not an anonymous page on the internet. We have a real store in Bukhara: come in, try the scents, then decide.',
+    'trust.lead': 'We’re not an anonymous page on the internet. We have a real store in Uzbekistan: come in, try the scents, then decide.',
     'trust.t1.t': 'A real store',
-    'trust.t1.d': 'Our store in Bukhara is open. Try any scent on the spot.',
+    'trust.t1.d': 'Our store in Uzbekistan is open. Try any scent on the spot.',
     'trust.t2.t': 'Transparent prices',
     'trust.t2.d': 'All prices are on the website. No hidden fees.',
     'trust.t3.t': 'The founder stands behind it',
@@ -681,7 +681,7 @@ window.I18N = {
     'gal.bag.d': 'Your scent in our branded bag, with our contacts printed on it.',
     'gal.sign.t': 'The Able sign',
     'gal.sign.d': 'The glowing round panel inside — a great spot for a photo.',
-    'gal.night.t': 'Bukhara at night',
+    'gal.night.t': 'Uzbekistan at night',
     'gal.night.d': 'Gold letters and wrought-iron details — you’ll spot us from afar.',
 
     'contact.eyebrow': 'Our location',
@@ -695,7 +695,7 @@ window.I18N = {
     'contact.call': 'Call us',
 
     'footer.slogan': 'Find your signature scent',
-    'footer.about': 'Premium fragrance house in Bukhara. World-class scents in convenient sizes.',
+    'footer.about': 'Premium fragrance house in Uzbekistan. World-class scents in convenient sizes.',
     'footer.menu': 'Menu',
     'footer.contacts': 'Contacts',
     'footer.social': 'Social',

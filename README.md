@@ -1,6 +1,6 @@
 # Able Parfum — sayt va admin panel
 
-Buxorodagi **Able Parfum** do'koni uchun premium sayt (uz / ru / en), onlayn buyurtma, Telegram bildirishnomalari va admin panel.
+O‘zbekistondagi **Able Parfum** do'koni uchun premium sayt (uz / ru / en), onlayn buyurtma, Telegram bildirishnomalari va admin panel.
 
 ## Tuzilma
 
@@ -106,7 +106,7 @@ Sayt Node.js serverda ham ishlaydi — u holda **VPS** yoki Node.js qo'llaydigan
 
 ## Tekshirib chiqing
 
-- **Manzil matni** — hozir «Buxoro shahri». Admin → Sozlamalar'da to'liq manzil va mo'ljalni yozing.
+- **Manzil matni** — hozir «O‘zbekiston». Admin → Sozlamalar'da to'liq manzil va mo'ljalni yozing.
 - **Atir nomlari va notalari** — rasmlardagi nomlardan olingan; xato bo'lsa, admin → Mahsulotlar'dan tuzating. «Now» atirining brendi bo'sh qoldirilgan.
 - **FAQ** — qaytarish/almashtirish va yetkazib berish shartlari umumiy yozilgan. Do'koningiz qoidalariga mos ekanini tekshiring (`public/js/i18n.js`, `faq.a2` va `faq.a4`).
 - **Instagram** — brief bo'yicha `@able.parfumes` ishlatilgan; paket ustida `@able.parfume` yozilgan. Qaysi biri to'g'riligini tasdiqlang.
