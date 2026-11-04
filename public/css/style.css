@@ -1211,3 +1211,37 @@ body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY
 .geo.hidden, .geo .hidden { display: none; }
 @keyframes geoPulse { 50% { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .geo-btn.is-loading svg { animation: none; } }
+
+/* ---- "Bizni kuzatib boring" ostida: yorqin, oqib turuvchi gradientli katalog tugmasi ---- */
+.vivid-cta { display: flex; justify-content: center; margin-top: 44px; }
+.vivid-cta-btn {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 22px 46px; border-radius: 99px;
+  font-size: 17px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #fff;
+  text-shadow: 0 1px 2px rgba(80, 10, 30, .35);
+  background: linear-gradient(110deg, #e8175d, #ff5a1f, #f0207a, #9b2cf0, #e8175d);
+  background-size: 300% 100%;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .5) inset, 0 14px 40px rgba(255, 61, 127, .4), 0 0 60px rgba(255, 138, 61, .35);
+  animation: vividFlow 6s linear infinite, vividGlow 2.4s ease-in-out infinite;
+  transition: transform .35s var(--ease);
+}
+.vivid-cta-btn::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .8) 50%, transparent 70%);
+  transform: translateX(-120%); animation: storeCtaShine 2.8s ease-in-out infinite;
+}
+.vivid-cta-icon { width: 24px; height: 24px; flex: none; transition: transform .35s var(--ease); }
+.vivid-cta-spark { animation: vividTwinkle 1.8s ease-in-out infinite; }
+.vivid-cta-btn:hover { transform: translateY(-3px) scale(1.04); }
+.vivid-cta-btn:hover .vivid-cta-bag { transform: rotate(-12deg) scale(1.15); }
+.vivid-cta-btn:active { transform: scale(.98); }
+.vivid-cta-btn:focus-visible { outline: 3px solid var(--wine-600); outline-offset: 4px; }
+@keyframes vividFlow { to { background-position: 300% 0; } }
+@keyframes vividGlow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255, 255, 255, .5) inset, 0 14px 40px rgba(255, 61, 127, .35), 0 0 50px rgba(255, 138, 61, .3); }
+  50% { box-shadow: 0 0 0 2px rgba(255, 255, 255, .75) inset, 0 18px 50px rgba(255, 61, 127, .55), 0 0 90px rgba(176, 60, 255, .4); }
+}
+@keyframes vividTwinkle { 50% { transform: scale(1.25) rotate(20deg); opacity: .8; } }
+@media (max-width: 640px) { .vivid-cta { margin-top: 32px; } .vivid-cta-btn { width: 100%; justify-content: center; padding: 20px 28px; font-size: 15px; } }
+@media (prefers-reduced-motion: reduce) { .vivid-cta-btn, .vivid-cta-btn::after, .vivid-cta-spark { animation: none; } }
