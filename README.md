@@ -53,7 +53,7 @@ Sayt shaxsiy akkauntga (@shuxratgafurov1) to'g'ridan-to'g'ri yoza olmaydi — Te
 1. Telegramda **@BotFather** → `/newbot` → bot nomini kiriting → **token** beriladi.
 2. Admin panel → **Sozlamalar** → tokenni joylang → «Saqlash».
 3. **@shuxratgafurov1** akkauntidan yangi botni oching va **/start** bosing.
-4. «Chat ID ni topish» → Shuhrat akani tanlang → «Saqlash» → «Sinov xabari».
+4. «Chat ID ni topish» → Shuxrat akani tanlang → «Saqlash» → «Sinov xabari».
 
 Shundan keyin har bir buyurtma (mijoz ismi, telefoni, atir, hajm, narx, manzil) darhol Telegramga keladi.
 Bot ulanmagan paytda ham buyurtma yo'qolmaydi: u admin paneldagi «Buyurtmalar» ro'yxatiga yoziladi, mijozga esa Telegram chatni tayyor matn bilan ochish taklif qilinadi.

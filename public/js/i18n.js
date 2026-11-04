@@ -158,10 +158,10 @@ window.I18N = {
     'cart.remove': "O'chirish",
 
     'founder.eyebrow': 'Asoschi',
-    'founder.title': 'Shuhrat Gafurov',
+    'founder.title': 'Shuxrat Gafurov',
     'founder.role': 'Able Parfum asoschisi · O‘zbekistondagi top-blogerlardan biri',
-    'founder.p1': 'Shuhrat Gafurov — O‘zbekistonning eng taniqli va sevimli blogerlaridan biri. U har kuni minglab insonlar bilan samimiy muloqot qiladi va ularga foydali, ilhomlantiruvchi kontent ulashadi.',
-    'founder.p2': 'Able Parfum oddiy g‘oyadan tug‘ilgan: har bir inson dunyoning eng yaxshi hidlarini ortiqcha xarajatsiz his qila olishi kerak. Shuhrat har bir hidni shaxsan tanlaydi va brend sifatiga o‘z nomi bilan javob beradi.',
+    'founder.p1': 'Shuxrat Gafurov — O‘zbekistonning eng taniqli va sevimli blogerlaridan biri. U har kuni minglab insonlar bilan samimiy muloqot qiladi va ularga foydali, ilhomlantiruvchi kontent ulashadi.',
+    'founder.p2': 'Able Parfum oddiy g‘oyadan tug‘ilgan: har bir inson dunyoning eng yaxshi hidlarini ortiqcha xarajatsiz his qila olishi kerak. Shuxrat har bir hidni shaxsan tanlaydi va brend sifatiga o‘z nomi bilan javob beradi.',
     'founder.quote': '«Yaxshi hid — bu hashamat emas, bu o‘zingizga bo‘lgan hurmat.»',
     'founder.ig': 'Instagram sahifasi',
 
@@ -648,10 +648,10 @@ window.I18N = {
     'cart.remove': 'Remove',
 
     'founder.eyebrow': 'Founder',
-    'founder.title': 'Shuhrat Gafurov',
+    'founder.title': 'Shuxrat Gafurov',
     'founder.role': 'Founder of Able Parfum · one of Uzbekistan’s top bloggers',
-    'founder.p1': 'Shuhrat Gafurov is one of Uzbekistan’s best-known and best-loved bloggers. Every day he connects with thousands of people and shares useful, inspiring content.',
-    'founder.p2': 'Able Parfum was born from a simple idea: everyone should be able to enjoy the world’s finest scents without overspending. Shuhrat personally selects every fragrance and puts his own name behind the brand’s quality.',
+    'founder.p1': 'Shuxrat Gafurov is one of Uzbekistan’s best-known and best-loved bloggers. Every day he connects with thousands of people and shares useful, inspiring content.',
+    'founder.p2': 'Able Parfum was born from a simple idea: everyone should be able to enjoy the world’s finest scents without overspending. Shuxrat personally selects every fragrance and puts his own name behind the brand’s quality.',
     'founder.quote': '“A good scent isn’t a luxury — it’s respect for yourself.”',
     'founder.ig': 'Instagram page',
 

@@ -545,7 +545,7 @@ async function api(req, res, pathname) {
     return send(res, 200, { ok: true });
   }
 
-  // Bot tokeni kiritilgach: Shuhrat aka botga /start bosadi, bu yerda uning chat ID si topiladi
+  // Bot tokeni kiritilgach: Shuxrat aka botga /start bosadi, bu yerda uning chat ID si topiladi
   if (method === 'POST' && pathname === '/api/admin/telegram/find-chats') {
     const { botToken } = telegramConfig(await getSettings());
     if (!botToken) return send(res, 400, { error: 'no_token' });
