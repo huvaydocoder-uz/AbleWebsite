@@ -114,17 +114,30 @@
   }
 
   const LANG_URL = { uz: '/', ru: '/ru/', en: '/en/' };
+  let langNavigating = false;
   function setLang(lang, btn) {
-    if (lang === state.lang) return;
-    state.lang = lang;
-    store.set('able-lang', lang);
-    if (btn && !reduceMotion) puff(btn);
-    document.body.classList.add('lang-out');
-    $('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === lang));
-    moveLangIndicator();
-    // Har bir tilning o'z manzili bor — o'sha sahifaga o'tamiz (animatsiya tugagach)
-    setTimeout(() => { location.href = LANG_URL[lang] + location.hash; }, reduceMotion ? 0 : 320);
+    if (lang === state.lang || langNavigating || !LANG_URL[lang]) return;
+    langNavigating = true;
+    const go = () => { location.href = LANG_URL[lang] + location.hash; };
+    // Har bir tilning o'z manzili bor — o'sha sahifaga o'tamiz (animatsiya tugagach).
+    // O'tish birinchi bo'lib rejalashtiriladi: bezak qismida xato bo'lsa ham sahifa hech qachon xira holatda qotib qolmaydi.
+    setTimeout(go, reduceMotion ? 0 : 220);
+    try {
+      store.set('able-lang', lang);
+      if (btn && !reduceMotion) puff(btn);
+      document.body.classList.add('lang-out');
+      $$('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === lang));
+      moveLangIndicator();
+    } catch (e) { console.error(e); go(); }
   }
+  // "Orqaga" bosilganda brauzer sahifani keshdan (bfcache) xira holatida qaytarmasin
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    langNavigating = false;
+    document.body.classList.remove('lang-out');
+    $$('.lang-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === state.lang));
+    moveLangIndicator();
+  });
 
   // Til tugmasi bosilganda atir purkalgandek zarrachalar
   function puff(el) {
@@ -233,7 +246,8 @@
   // ------------------------------------------------------------ data
   async function loadCatalog() {
     try {
-      const r = await fetch('api/catalog', { cache: 'no-store' });
+      // CDN keshidan keladi (server 30 s kesh beradi) — minglab tashrifda ham tez va serverga yuk tushmaydi
+      const r = await fetch('api/catalog', { signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined });
       if (!r.ok) throw new Error(r.status);
       return await r.json();
     } catch {
@@ -704,6 +718,7 @@
       try {
         const r = await fetch('api/orders', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined, // tugma "Yuborilmoqda…" holatida qotib qolmasin
           body: JSON.stringify({ ...od, lang: state.lang, items: orderItems }),
         });
         result = await r.json();

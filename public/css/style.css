@@ -33,8 +33,8 @@ body::before {
 }
 
 /* ---------------------------------------------------------------- language switch "mist" */
-[data-i18n], [data-i18n-placeholder] { transition: filter .35s var(--ease), opacity .35s var(--ease), transform .35s var(--ease); }
-body.lang-out [data-i18n] { filter: blur(6px); opacity: 0; transform: translateY(3px); }
+[data-i18n], [data-i18n-placeholder] { transition: opacity .2s ease, transform .2s ease; }
+body.lang-out [data-i18n] { opacity: 0; transform: translateY(3px); }
 
 /* ==========================================================================
    INTRO

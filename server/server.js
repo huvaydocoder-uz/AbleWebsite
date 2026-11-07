@@ -56,10 +56,12 @@ const fileBackend = {
 };
 const redisBackend = {
   async cmd(args) {
+    // Timeout: baza sekinlashsa so'rov 15 s osilib qolmasin — tez xato beramiz va zaxira yo'lga o'tamiz
     const r = await fetch(REDIS_URL, {
       method: 'POST',
       headers: { Authorization: `Bearer ${REDIS_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(args),
+      signal: AbortSignal.timeout(5000),
     });
     const j = await r.json();
     if (j.error) throw new Error('redis: ' + j.error);
@@ -82,6 +84,52 @@ const store = {
     // Vercel'da bazasiz yozib bo'lmaydi — admin aniq xato ko'rsin
     if (backend === fileBackend && ON_VERCEL) throw Object.assign(new Error('storage_not_configured'), { status: 503 });
     await backend.write(name, value);
+    if (name === 'products' || name === 'settings') catalogCache = null;
+  },
+};
+
+// ---------------------------------------------------------------- orders storage
+// Har bir buyurtma alohida yoziladi (Redis hash: able:orders:h, raqam: INCR able:orders:seq).
+// Avvalgi usul (butun ro'yxatni o'qib, qo'shib, qayta yozish) bir vaqtdagi buyurtmalarda
+// birini ikkinchisi ustidan yozib yuborardi va ID lar takrorlanardi. INCR/HSET atomik.
+const ORDERS_KEY = REDIS_PREFIX + 'orders:h', SEQ_KEY = REDIS_PREFIX + 'orders:seq';
+const legacyMaxSeq = (list) => list.reduce((m, o) => Math.max(m, Number(String(o.id).replace(/\D/g, '')) || 1000), 1000);
+let seqReady = false;
+const orderDb = {
+  async nextId() {
+    if (backend !== redisBackend) return 'AP-' + (legacyMaxSeq(await store.read('orders', [])) + 1);
+    if (!seqReady) {
+      // Birinchi marta: eski ro'yxatdagi eng katta raqamdan davom etamiz (NX — faqat hali yo'q bo'lsa)
+      const legacy = await store.read('orders', []);
+      await redisBackend.cmd(['SET', SEQ_KEY, String(legacyMaxSeq(legacy)), 'NX']);
+      seqReady = true;
+    }
+    return 'AP-' + (await redisBackend.cmd(['INCR', SEQ_KEY]));
+  },
+  async save(o) {
+    if (backend !== redisBackend) {
+      const list = await store.read('orders', []);
+      const i = list.findIndex((x) => x.id === o.id);
+      if (i >= 0) list[i] = o; else list.push(o);
+      return store.write('orders', list);
+    }
+    await redisBackend.cmd(['HSET', ORDERS_KEY, o.id, JSON.stringify(o)]);
+  },
+  async list() {
+    const legacy = await store.read('orders', []);
+    if (backend !== redisBackend) return legacy;
+    const flat = (await redisBackend.cmd(['HGETALL', ORDERS_KEY])) || [];
+    const byId = new Map(legacy.map((o) => [o.id, o]));
+    for (let i = 1; i < flat.length; i += 2) { try { const o = JSON.parse(flat[i]); byId.set(o.id, o); } catch { /* buzilgan yozuv */ } }
+    const num = (o) => Number(String(o.id).replace(/\D/g, '')) || 0;
+    return [...byId.values()].sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)) || num(a) - num(b));
+  },
+  async get(id) {
+    if (backend === redisBackend) {
+      const v = await redisBackend.cmd(['HGET', ORDERS_KEY, id]);
+      if (v) return JSON.parse(v);
+    }
+    return (await store.read('orders', [])).find((x) => x.id === id) || null;
   },
 };
 
@@ -214,6 +262,7 @@ async function sendTelegram(text, settings) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(6000),
     });
     const j = await r.json();
     return j.ok ? { ok: true, messageId: j.result && j.result.message_id } : { ok: false, reason: j.description || 'telegram_error' };
@@ -235,6 +284,7 @@ async function sendTelegramLocation(loc, replyTo, settings) {
         ...(loc.acc ? { horizontal_accuracy: Math.min(1500, loc.acc) } : {}),
         ...(replyTo ? { reply_parameters: { message_id: replyTo, allow_sending_without_reply: true } } : {}),
       }),
+      signal: AbortSignal.timeout(6000),
     });
     const j = await r.json();
     return j.ok ? { ok: true } : { ok: false, reason: j.description || 'telegram_error' };
@@ -276,16 +326,29 @@ function orderMessage(o) {
 }
 
 // ---------------------------------------------------------------- stats
+const VISITS_KEY = REDIS_PREFIX + 'visits';
 async function bumpVisit() {
-  const s = await store.read('stats', { visits: {} });
   const day = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
-  s.visits[day] = (s.visits[day] || 0) + 1;
-  await store.write('stats', s).catch(() => {}); // statistika yozilmasa ham sayt ishlayversin
+  try {
+    // Redis'da atomik HINCRBY: bir vaqtdagi tashriflar bir-birini o'chirmaydi
+    if (backend === redisBackend) return void (await redisBackend.cmd(['HINCRBY', VISITS_KEY, day, 1]));
+    const s = await store.read('stats', { visits: {} });
+    s.visits[day] = (s.visits[day] || 0) + 1;
+    await store.write('stats', s);
+  } catch { /* statistika yozilmasa ham sayt ishlayversin */ }
+}
+async function readVisits() {
+  const { visits } = await store.read('stats', { visits: {} }); // eski (ko'chirishdan oldingi) hisob
+  const out = { ...visits };
+  if (backend === redisBackend) {
+    const flat = (await redisBackend.cmd(['HGETALL', VISITS_KEY])) || [];
+    for (let i = 0; i < flat.length; i += 2) out[flat[i]] = (out[flat[i]] || 0) + Number(flat[i + 1] || 0);
+  }
+  return out;
 }
 
 async function buildStats() {
-  const orders = await store.read('orders', []);
-  const { visits } = await store.read('stats', { visits: {} });
+  const [orders, visits] = await Promise.all([orderDb.list(), readVisits()]);
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
   const dayOf = (iso) => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
   const valid = orders.filter((o) => o.status !== 'cancelled');
@@ -431,16 +494,30 @@ function sanitizeProductInput(b, existing = {}) {
 }
 
 // ---------------------------------------------------------------- API
+// Funksiya nusxasi ichidagi qisqa kesh: CDN yangilash so'rovlari ham bazaga har safar bormaydi
+const CATALOG_TTL_MS = 10 * 1000;
+let catalogCache = null;
+
 async function api(req, res, pathname) {
   const method = req.method;
   const ip = clientIp(req);
 
   // ---- public
   if (method === 'GET' && pathname === '/api/catalog') {
-    const s = await getSettings();
-    const products = (await getProducts()).filter((p) => p.active).sort((a, b) => a.order - b.order)
-      .map((p) => ({ ...p, effectiveDiscount: effectiveDiscount(p, s) }));
-    return send(res, 200, { settings: publicSettings(s), products }, { 'Cache-Control': 'no-store' });
+    // 1) Vercel CDN javobni 30 s saqlaydi va keyin fonda yangilaydi (stale-while-revalidate):
+    //    minglab mehmon kelsa ham funksiya va baza har 30 s da taxminan bir marta chaqiriladi.
+    // 2) Brauzer keshlamaydi — admin narx/chegirmani o'zgartirsa, ko'pi bilan ~30 s da saytda ko'rinadi.
+    const now = Date.now();
+    if (!catalogCache || now - catalogCache.at > CATALOG_TTL_MS) {
+      const [s, all] = await Promise.all([getSettings(), getProducts()]);
+      const products = all.filter((p) => p.active).sort((a, b) => a.order - b.order)
+        .map((p) => ({ ...p, effectiveDiscount: effectiveDiscount(p, s) }));
+      catalogCache = { at: now, body: { settings: publicSettings(s), products } };
+    }
+    return send(res, 200, catalogCache.body, {
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+      'Vercel-CDN-Cache-Control': 'max-age=30, stale-while-revalidate=300',
+    });
   }
 
   if (method === 'POST' && pathname === '/api/visit') {
@@ -449,14 +526,14 @@ async function api(req, res, pathname) {
   }
 
   if (method === 'POST' && pathname === '/api/orders') {
-    if (limited('order:' + ip, 8, 10 * 60 * 1000)) return send(res, 429, { error: 'too_many' });
+    // Mobil operatorlarda yuzlab mijoz bitta IP ortida bo'ladi (CGNAT) — chegara haqiqiy mijozlarni to'smasin
+    if (limited('order:' + ip, 20, 10 * 60 * 1000)) return send(res, 429, { error: 'too_many' });
     const b = await readBody(req, 32 * 1024);
     const name = clean(b.name, 80);
     const phone = clean(b.phone, 30);
     if (name.length < 2 || phone.replace(/\D/g, '').length < 9) return send(res, 400, { error: 'invalid_contact' });
 
-    const s = await getSettings();
-    const products = await getProducts();
+    const [s, products] = await Promise.all([getSettings(), getProducts()]);
     const items = [];
     for (const it of (Array.isArray(b.items) ? b.items : []).slice(0, 20)) {
       const p = products.find((x) => x.id === it.productId && x.active);
@@ -467,10 +544,10 @@ async function api(req, res, pathname) {
     }
     if (!items.length) return send(res, 400, { error: 'empty' });
 
-    const orders = await store.read('orders', []);
-    const seq = (orders.reduce((m, o) => Math.max(m, Number(String(o.id).replace(/\D/g, '')) || 1000), 1000)) + 1;
+    // Baza vaqtincha ishlamasa ham buyurtma raqamsiz qolmasin
+    const id = await orderDb.nextId().catch((e) => { console.error('order id', e); return 'AP-' + (Date.now() % 1e9); });
     const order = {
-      id: 'AP-' + seq,
+      id,
       createdAt: new Date().toISOString(),
       name, phone,
       delivery: b.delivery === 'delivery' ? 'delivery' : 'pickup',
@@ -482,12 +559,15 @@ async function api(req, res, pathname) {
       total: items.reduce((a, i) => a + i.unitPrice * i.qty, 0),
       status: 'new',
       note: '',
+      telegramSent: false,
     };
+    // 1) Avval bazaga yozamiz — Telegram sekin yoki ishlamasa ham buyurtma yo'qolmaydi
+    const saved = await orderDb.save(order).then(() => true, (e) => { console.error('order save', order.id, e.message); return false; });
+    // 2) Keyin Telegram (baza ishlamagan bo'lsa ham — shunda buyurtma baribir sotuvchiga yetadi)
     const tg = await sendTelegram(orderMessage(order), s);
-    order.telegramSent = tg.ok;
     if (tg.ok && order.location) await sendTelegramLocation(order.location, tg.messageId, s);
-    orders.push(order);
-    await store.write('orders', orders);
+    if (tg.ok && saved) { order.telegramSent = true; await orderDb.save(order).catch(() => {}); }
+    if (!saved && !tg.ok) return send(res, 503, { error: 'unavailable' }); // mijozga zaxira (Telegram chat) yo'li ko'rsatiladi
     return send(res, 201, { ok: true, id: order.id, total: order.total, telegramSent: tg.ok, message: tg.ok ? null : orderMessage(order).replace(/<[^>]+>/g, '') });
   }
 
@@ -609,18 +689,17 @@ async function api(req, res, pathname) {
   }
 
   if (method === 'GET' && pathname === '/api/admin/orders') {
-    return send(res, 200, (await store.read('orders', [])).slice().reverse());
+    return send(res, 200, (await orderDb.list()).reverse());
   }
 
   const om = pathname.match(/^\/api\/admin\/orders\/(AP-\d+)$/);
   if (om && method === 'PATCH') {
     const b = await readBody(req, 4096);
-    const orders = await store.read('orders', []);
-    const o = orders.find((x) => x.id === om[1]);
+    const o = await orderDb.get(om[1]);
     if (!o) return send(res, 404, { error: 'not_found' });
     if (['new', 'confirmed', 'done', 'cancelled'].includes(b.status)) o.status = b.status;
     if ('note' in b) o.note = clean(b.note, 500);
-    await store.write('orders', orders);
+    await orderDb.save(o); // faqat shu buyurtma yoziladi — yangi kelayotgan buyurtmalarga tegmaydi
     return send(res, 200, o);
   }
 
