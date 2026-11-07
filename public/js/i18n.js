@@ -15,6 +15,7 @@ window.I18N = {
     'nav.call': 'Qo‘ng‘iroq',
     'nav.menu': 'Menyu',
     'header.call': 'Telefon qilish',
+    'fab.top': 'Sahifa boshiga qaytish',
 
     'hero.eyebrow': 'O‘zbekistondagi premium parfyumeriya uyi',
     'hero.title1': 'O‘zingizga mos',
@@ -261,6 +262,7 @@ window.I18N = {
     'nav.menu': 'Меню',
     'header.call': 'Позвонить',
 
+    'fab.top': 'Наверх',
     'hero.eyebrow': 'Дом премиальной парфюмерии в Узбекистане',
     'hero.title1': 'Найдите',
     'hero.title2': 'свой аромат',
@@ -507,6 +509,7 @@ window.I18N = {
     'header.call': 'Call us',
 
     'hero.eyebrow': 'Premium fragrance house in Uzbekistan',
+    'fab.top': 'Back to top',
     'hero.title1': 'Find your',
     'hero.title2': 'signature scent',
     'hero.lead': 'More than 60 of the world’s most iconic fragrances in one place. From 10 ml, at a fair price. The scent people will remember you by is right here.',

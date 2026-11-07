@@ -796,11 +796,19 @@
     const sticky = $('#stickyCta');
     const links = $$('.nav-link');
     const sections = links.map((a) => $(a.getAttribute('href'))).filter(Boolean);
+    const fabs = $$('.fab');
+    let fabOn = null;
     let ticking = false;
     const update = () => {
       ticking = false;
       const y = scrollY;
       header.classList.toggle('is-scrolled', y > 30);
+      // Suzuvchi tugmalar foydalanuvchi pastga tushganda chiqadi
+      const on = y > Math.min(480, innerHeight * 0.6);
+      if (on !== fabOn) {
+        fabOn = on;
+        fabs.forEach((f) => { f.classList.toggle('is-visible', on); f.tabIndex = on ? 0 : -1; f.setAttribute('aria-hidden', String(!on)); });
+      }
       sticky.classList.toggle('is-visible', y > innerHeight * 0.8 && y < document.body.scrollHeight - innerHeight * 1.6);
       let current = null;
       for (const s of sections) if (s.getBoundingClientRect().top < innerHeight * 0.35) current = s.id;
@@ -812,6 +820,12 @@
 
   // ------------------------------------------------------------ events
   function bind() {
+    const fabTop = $('#fabTop');
+    if (fabTop) fabTop.addEventListener('click', () => {
+      scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+      fabTop.blur();
+    });
+
     $$('.lang-btn').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang, b)));
     addEventListener('resize', moveLangIndicator);
 

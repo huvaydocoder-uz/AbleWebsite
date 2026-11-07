@@ -1245,3 +1245,63 @@ body.lang-out [data-i18n] { opacity: 0; transform: translateY(3px); }
 @keyframes vividTwinkle { 50% { transform: scale(1.25) rotate(20deg); opacity: .8; } }
 @media (max-width: 640px) { .vivid-cta { margin-top: 32px; } .vivid-cta-btn { width: 100%; justify-content: center; padding: 20px 28px; font-size: 15px; } }
 @media (prefers-reduced-motion: reduce) { .vivid-cta-btn, .vivid-cta-btn::after, .vivid-cta-spark { animation: none; } }
+
+/* ---------------------------------------------------------------- suzuvchi tugmalar: qo'ng'iroq (chap) va tepaga (o'ng) */
+.fab {
+  position: fixed; bottom: calc(26px + env(safe-area-inset-bottom)); z-index: 45;
+  width: 58px; height: 58px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  display: grid; place-items: center; color: var(--wine-900);
+  background: radial-gradient(circle at 32% 26%, #f6e2b8 0%, var(--gold-400) 52%, var(--gold-500) 100%);
+  box-shadow: 0 12px 28px rgba(28, 4, 10, .38), inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -2px 6px rgba(120, 80, 30, .35);
+  opacity: 0; transform: translateY(28px) scale(.7); pointer-events: none;
+  transition: opacity .45s var(--ease), transform .6s var(--ease), box-shadow .35s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.fab.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+.fab-left { left: 26px; }
+.fab-right { right: 26px; }
+.fab svg { position: relative; z-index: 2; width: 24px; height: 24px; transition: transform .45s var(--ease); }
+
+/* Aylanuvchi oltin halqa — hover/fokusda ko'rinadi */
+.fab-ring {
+  position: absolute; inset: -8px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, #fff3d6, var(--gold-300) 12%, rgba(230, 200, 145, 0) 34%, var(--gold-400) 50%, var(--gold-500) 62%, rgba(185, 143, 76, 0) 84%, #fff3d6);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3px));
+  opacity: 0; transform: scale(.85); transition: opacity .35s var(--ease), transform .45s var(--ease);
+}
+.fab:hover, .fab:focus-visible { box-shadow: 0 16px 34px rgba(28, 4, 10, .45), 0 0 0 4px rgba(212, 173, 106, .18), inset 0 1px 0 rgba(255, 255, 255, .6); }
+.fab.is-visible:hover, .fab.is-visible:focus-visible { transform: translateY(-3px) scale(1.06); }
+.fab:hover .fab-ring, .fab:focus-visible .fab-ring { opacity: 1; transform: scale(1); animation: fabSpin 1.8s linear infinite; }
+.fab:focus-visible { outline: 2px solid var(--cream-50); outline-offset: 9px; }
+.fab-call:hover svg { animation: fabRing .9s var(--ease) infinite; }
+.fab-right:hover svg { transform: translateY(-3px); }
+.fab.is-visible:active { transform: scale(.94); }
+
+/* Qo'ng'iroq tugmasidan tarqaluvchi yengil to'lqinlar (e'tibor uchun) */
+.fab-call::before, .fab-call::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  border: 2px solid var(--gold-400); opacity: 0;
+}
+.fab-call.is-visible::before { animation: fabPulse 2.6s ease-out infinite; }
+.fab-call.is-visible::after { animation: fabPulse 2.6s ease-out 1.3s infinite; }
+
+@keyframes fabSpin { to { transform: rotate(360deg); } }
+@keyframes fabPulse { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(1.75); opacity: 0; } }
+@keyframes fabRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-14deg); } 30% { transform: rotate(12deg); } 45% { transform: rotate(-8deg); } 60% { transform: rotate(5deg); } 75% { transform: rotate(0); } }
+
+[data-theme='light'] .fab { box-shadow: 0 10px 24px rgba(58, 10, 20, .22), inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 6px rgba(120, 80, 30, .3); }
+[data-theme='light'] .fab:focus-visible { outline-color: var(--wine-700); }
+
+/* Mobil: pastdagi "Atir tanlash" paneli ustida turadi */
+@media (max-width: 767px) {
+  .fab { width: 50px; height: 50px; bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .fab-left { left: 14px; }
+  .fab-right { right: 14px; }
+  .fab svg { width: 21px; height: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fab, .fab-ring, .fab svg { transition: opacity .2s; }
+  .fab:hover .fab-ring, .fab:focus-visible .fab-ring { animation: none; }
+  .fab-call:hover svg, .fab-call.is-visible::before, .fab-call.is-visible::after { animation: none; }
+}
