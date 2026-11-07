@@ -3,6 +3,9 @@
   "framework": null,
   "buildCommand": "node scripts/build-seo.js",
   "outputDirectory": "public",
+  "regions": [
+    "fra1"
+  ],
   "rewrites": [
     {
       "source": "/:lang(ru|en)/api/:path*",
