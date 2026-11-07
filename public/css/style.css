@@ -945,7 +945,7 @@ body.lang-out [data-i18n] { opacity: 0; transform: translateY(3px); }
    ========================================================================== */
 .sticky-cta { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40; display: none; gap: 10px; transform: translateY(150%); transition: transform .5s var(--ease); }
 .sticky-cta.is-visible { transform: none; }
-.sticky-call { width: 54px; height: 54px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--wine-700); color: var(--gold-300); border: 1px solid rgba(230, 200, 145, .4); }
+.sticky-call { width: 54px; height: 54px; flex: none; display: grid; place-items: center; border-radius: 50%; color: var(--wine-900); background: radial-gradient(circle at 32% 26%, #f6e2b8 0%, var(--gold-400) 52%, var(--gold-500) 100%); border: 0; box-shadow: 0 12px 28px rgba(28, 4, 10, .38), inset 0 1px 0 rgba(255, 255, 255, .55), inset 0 -2px 6px rgba(120, 80, 30, .35); }
 @media (max-width: 767px) { .sticky-cta { display: flex; } .footer { padding-bottom: 80px; } }
 
 /* ==========================================================================
@@ -1296,7 +1296,7 @@ body.lang-out [data-i18n] { opacity: 0; transform: translateY(3px); }
 /* Mobil: pastdagi "Atir tanlash" paneli ustida turadi */
 @media (max-width: 767px) {
   .fab { width: 50px; height: 50px; bottom: calc(84px + env(safe-area-inset-bottom)); }
-  .fab-left { left: 14px; }
+  .fab-left { display: none; } /* mobilda qo'ng'iroq pastki paneldagi tugmada */
   .fab-right { right: 14px; }
   .fab svg { width: 21px; height: 21px; }
 }
